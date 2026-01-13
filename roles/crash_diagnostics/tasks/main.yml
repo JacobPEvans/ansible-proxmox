@@ -1,76 +1,59 @@
 ---
 # Crash Diagnostics role tasks
 
-- name: Install kdump-tools package
+# =============================================================================
+# PACKAGE INSTALLATION
+# =============================================================================
+
+- name: Install debugging and crash diagnostic packages
   ansible.builtin.apt:
-    name: kdump-tools
+    name: "{{ crash_diagnostics_packages }}"
     state: present
     update_cache: true
-  when: crash_diagnostics_install_kdump | bool
   tags:
     - crash_diagnostics
-    - kdump
+    - packages
 
-- name: Configure crash diagnostic sysctl parameters
-  ansible.posix.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    sysctl_file: "{{ crash_diagnostics_sysctl_file }}"
-    reload: true
-    state: present
-  loop: "{{ crash_diagnostics_sysctl_settings }}"
+# =============================================================================
+# SYSCTL CONFIGURATION
+# =============================================================================
+
+- name: Remove old manual sysctl debug configs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ crash_diagnostics_sysctl_cleanup }}"
+  notify: Reload sysctl
   tags:
     - crash_diagnostics
     - sysctl
 
-- name: Check current GRUB configuration
-  ansible.builtin.slurp:
-    src: /etc/default/grub
-  register: crash_diagnostics_grub_config
-  tags:
-    - crash_diagnostics
-    - grub
-
-- name: Parse current GRUB_CMDLINE_LINUX_DEFAULT
-  ansible.builtin.set_fact:
-    crash_diagnostics_cmdline_current: >-
-      {{ (crash_diagnostics_grub_config.content | b64decode)
-         | regex_search('GRUB_CMDLINE_LINUX_DEFAULT="([^"]*)"', '\1')
-         | default([''], true) | first }}
-  tags:
-    - crash_diagnostics
-    - grub
-
-- name: Build updated GRUB_CMDLINE_LINUX_DEFAULT
-  ansible.builtin.set_fact:
-    crash_diagnostics_cmdline_new: >-
-      {{ (crash_diagnostics_cmdline_current.split()
-          | reject('match', '^(nmi_watchdog|softlockup_panic|hung_task_panic)=') | list
-          + crash_diagnostics_grub_params) | join(' ') }}
-  tags:
-    - crash_diagnostics
-    - grub
-
-- name: Update GRUB_CMDLINE_LINUX_DEFAULT if changed
-  ansible.builtin.lineinfile:
-    path: /etc/default/grub
-    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
-    line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ crash_diagnostics_cmdline_new }}"'
+- name: Deploy sysctl crash diagnostics config
+  ansible.builtin.template:
+    src: sysctl.conf.j2
+    dest: "{{ crash_diagnostics_sysctl_file }}"
+    owner: root
+    group: root
+    mode: "0644"
     backup: true
-  register: crash_diagnostics_grub_result
-  notify: Update GRUB
+  notify: Reload sysctl
   tags:
     - crash_diagnostics
-    - grub
+    - sysctl
 
-- name: Display GRUB changes summary
-  ansible.builtin.debug:
-    msg: |
-      GRUB configuration updated:
-        Old: "{{ crash_diagnostics_cmdline_current }}"
-        New: "{{ crash_diagnostics_cmdline_new }}"
-      A reboot is required for GRUB changes to take effect.
-  changed_when: false
+# =============================================================================
+# GRUB CONFIGURATION
+# =============================================================================
+
+- name: Deploy GRUB drop-in config for crash diagnostics
+  ansible.builtin.template:
+    src: grub.cfg.j2
+    dest: "{{ crash_diagnostics_grub_dropin }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: Update GRUB
   tags:
     - crash_diagnostics
     - grub

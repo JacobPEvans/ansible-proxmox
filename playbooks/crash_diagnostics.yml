@@ -13,7 +13,7 @@
         - crash_diagnostics
 
   post_tasks:
-    - name: Display reboot reminder
+    - name: Display post-apply instructions
       ansible.builtin.debug:
         msg: |
           Crash diagnostics configured successfully.
@@ -24,6 +24,9 @@
             - softlockup_panic=1 (panic on soft lockup)
             - hung_task_panic=1 (panic on hung tasks)
 
-          To reboot: ansible proxmox -i ../../local/hosts.yml -m reboot
+          To reboot manually: ssh pve 'reboot'
+
+          NOTE: Proxmox automatically checks for updates daily and
+          notifies root@pam via email. No additional update reminders needed.
       tags:
         - always

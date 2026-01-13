@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+#
+# Crash Diagnostics - Kernel Debug Settings
+#
+# These settings configure the kernel to panic and log maximum
+# information on various failure conditions for debugging.
+
+{% for setting in crash_diagnostics_sysctl_settings %}
+# {{ setting.comment }}
+{{ setting.name }} = {{ setting.value }}
+
+{% endfor %}
