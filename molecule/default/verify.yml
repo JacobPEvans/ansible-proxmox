@@ -1,7 +1,8 @@
 ---
 - name: Verify
   hosts: all
-  become: true
+  # Note: become: false since Docker containers run as root
+  become: false
   gather_facts: true
 
   tasks:
