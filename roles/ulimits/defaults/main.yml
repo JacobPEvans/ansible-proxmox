@@ -1,0 +1,15 @@
+---
+# Ulimits role defaults
+
+ulimits_nofile: 65536
+ulimits_nproc: 65536
+
+# Users to configure limits for
+ulimits_users:
+  - "*"
+  - root
+  - splunk
+
+# Config file paths
+ulimits_limits_file: /etc/security/limits.d/90-ansible.conf
+ulimits_systemd_file: /etc/systemd/system.conf.d/limits.conf

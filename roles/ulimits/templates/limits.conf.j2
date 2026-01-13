@@ -1,0 +1,9 @@
+# Ansible managed - System-wide ulimits configuration
+# See limits.conf(5) for details
+
+{% for user in ulimits_users %}
+{{ user }} soft nofile {{ ulimits_nofile }}
+{{ user }} hard nofile {{ ulimits_nofile }}
+{{ user }} soft nproc {{ ulimits_nproc }}
+{{ user }} hard nproc {{ ulimits_nproc }}
+{% endfor %}

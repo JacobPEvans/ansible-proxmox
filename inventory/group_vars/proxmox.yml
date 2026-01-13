@@ -1,0 +1,29 @@
+---
+# Group variables for Proxmox VE servers
+
+# ZFS Swap Configuration
+zfs_swap_size: "96G"
+zfs_swap_pool: "rpool"
+zfs_swap_dataset: "swap"
+
+# Kernel Tuning
+kernel_tuning_swappiness: 10
+kernel_tuning_vfs_cache_pressure: 50
+kernel_tuning_dirty_ratio: 10
+kernel_tuning_dirty_background_ratio: 5
+kernel_tuning_overcommit_memory: 0
+
+# Ulimits Configuration
+ulimits_nofile: 65536
+ulimits_nproc: 65536
+ulimits_users:
+  - "*"
+  - root
+  - splunk
+
+# Common packages to install
+common_packages:
+  - htop
+  - iotop
+  - lm-sensors
+  - rasdaemon

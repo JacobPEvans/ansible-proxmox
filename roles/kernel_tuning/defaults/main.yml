@@ -1,0 +1,18 @@
+---
+# Kernel Tuning role defaults
+
+# Swap behavior - lower = prefer RAM (10-30 for SSD/NVMe)
+kernel_tuning_swappiness: 10
+
+# VFS cache pressure - lower = keep directory/inode caches longer
+kernel_tuning_vfs_cache_pressure: 50
+
+# Dirty page writeback - optimized for NVMe
+kernel_tuning_dirty_ratio: 10
+kernel_tuning_dirty_background_ratio: 5
+
+# Memory overcommit - heuristic (default, safe for homelab)
+kernel_tuning_overcommit_memory: 0
+
+# Sysctl config file path
+kernel_tuning_sysctl_file: /etc/sysctl.d/10-proxmox-tuning.conf

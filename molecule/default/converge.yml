@@ -1,0 +1,27 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Include common role
+      ansible.builtin.include_role:
+        name: common
+      tags:
+        - common
+
+    - name: Include kernel_tuning role
+      ansible.builtin.include_role:
+        name: kernel_tuning
+      tags:
+        - kernel_tuning
+
+    - name: Include ulimits role
+      ansible.builtin.include_role:
+        name: ulimits
+      tags:
+        - ulimits
+
+    # Note: zfs_swap role requires ZFS and is skipped in container tests
+    # Use integration tests on actual Proxmox hosts for full coverage

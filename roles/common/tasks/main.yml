@@ -1,0 +1,36 @@
+---
+# Common role tasks
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - common
+    - packages
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+  tags:
+    - common
+    - packages
+
+- name: Enable rasdaemon service
+  ansible.builtin.systemd:
+    name: rasdaemon
+    enabled: true
+    state: started
+  tags:
+    - common
+    - services
+
+- name: Enable lm-sensors service
+  ansible.builtin.systemd:
+    name: lm-sensors
+    enabled: true
+    state: started
+  tags:
+    - common
+    - services

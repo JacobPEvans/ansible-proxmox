@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Ansible
+*.retry
+.cache/
+
+# Molecule
+.molecule/
+molecule/**/instance_config.yml
+molecule/**/driver.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit)
+*.vault
+vault.yml
+secrets.yml
+.vault_pass
+.vault_password
+
+# Local inventory overrides
+inventory/local/
+inventory/*.local.yml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+*.tmp

@@ -1,0 +1,24 @@
+---
+# Main playbook for Proxmox VE server configuration
+
+- name: Configure Proxmox VE servers
+  hosts: proxmox
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: common
+      tags:
+        - common
+
+    - role: zfs_swap
+      tags:
+        - zfs_swap
+
+    - role: kernel_tuning
+      tags:
+        - kernel_tuning
+
+    - role: ulimits
+      tags:
+        - ulimits

@@ -1,0 +1,24 @@
+---
+# Kernel Tuning role tasks
+
+- name: Configure kernel tuning parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: "{{ kernel_tuning_sysctl_file }}"
+    reload: true
+    state: present
+  loop:
+    - name: vm.swappiness
+      value: "{{ kernel_tuning_swappiness }}"
+    - name: vm.vfs_cache_pressure
+      value: "{{ kernel_tuning_vfs_cache_pressure }}"
+    - name: vm.dirty_ratio
+      value: "{{ kernel_tuning_dirty_ratio }}"
+    - name: vm.dirty_background_ratio
+      value: "{{ kernel_tuning_dirty_background_ratio }}"
+    - name: vm.overcommit_memory
+      value: "{{ kernel_tuning_overcommit_memory }}"
+  tags:
+    - kernel_tuning
+    - sysctl

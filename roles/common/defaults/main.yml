@@ -1,0 +1,8 @@
+---
+# Common role defaults
+
+common_packages:
+  - htop
+  - iotop
+  - lm-sensors
+  - rasdaemon

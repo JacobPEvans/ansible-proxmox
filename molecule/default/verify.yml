@@ -1,0 +1,31 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Verify sysctl configuration file exists
+      ansible.builtin.stat:
+        path: /etc/sysctl.d/10-proxmox-tuning.conf
+      register: sysctl_file
+      failed_when: not sysctl_file.stat.exists
+
+    - name: Verify ulimits configuration file exists
+      ansible.builtin.stat:
+        path: /etc/security/limits.d/90-ansible.conf
+      register: limits_file
+      failed_when: not limits_file.stat.exists
+
+    - name: Verify systemd limits configuration exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system.conf.d/limits.conf
+      register: systemd_limits
+      failed_when: not systemd_limits.stat.exists
+
+    - name: Verify swappiness setting
+      ansible.builtin.command:
+        cmd: sysctl -n vm.swappiness
+      register: swappiness
+      changed_when: false
+      failed_when: swappiness.stdout != "10"

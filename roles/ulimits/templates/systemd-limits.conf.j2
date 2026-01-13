@@ -1,0 +1,4 @@
+# Ansible managed - Systemd default limits
+[Manager]
+DefaultLimitNOFILE={{ ulimits_nofile }}:{{ ulimits_nofile }}
+DefaultLimitNPROC={{ ulimits_nproc }}:{{ ulimits_nproc }}
