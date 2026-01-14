@@ -14,4 +14,4 @@
   roles:
     - role: proxmox_monitoring
       vars:
-        proxmox_monitoring_healthchecks_ping_url: "{{ lookup('env', 'HEALTHCHECK_PING_KEY') }}"
+        proxmox_monitoring_healthchecks_ping_url: "https://hc-ping.com/{{ lookup('env', 'HEALTHCHECK_PING_KEY') }}/proxmox"
