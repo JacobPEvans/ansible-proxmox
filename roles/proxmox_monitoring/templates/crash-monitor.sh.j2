@@ -1,0 +1,25 @@
+#!/bin/bash
+# Crash Investigation Monitor - logs system state every minute
+# Managed by Ansible - do not edit manually
+
+LOG_DIR="/var/log/crash-monitor"
+LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d).log"
+
+{
+  echo "=== $(date +%Y-%m-%dT%H:%M:%S) ==="
+  echo "--- Memory ---"
+  free -m
+  echo "--- Swap Usage ---"
+  cat /proc/meminfo | grep -E "^(Swap|Mem|Buffers|Cached|Active|Inactive|Dirty)"
+  echo "--- Top 10 Memory Users ---"
+  ps aux --sort=-%mem | head -11
+  echo "--- Load ---"
+  uptime
+  echo "--- VM/CT Count ---"
+  echo "Running VMs: $(qm list 2>/dev/null | grep -c running)"
+  echo "Running CTs: $(pct list 2>/dev/null | grep -c running)"
+  echo ""
+} >> "$LOG_FILE" 2>&1
+
+# Rotate: keep only last {{ proxmox_monitoring_log_retention_days }} days
+find "$LOG_DIR" -name "*.log" -mtime +{{ proxmox_monitoring_log_retention_days }} -delete 2>/dev/null

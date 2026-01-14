@@ -1,0 +1,15 @@
+---
+# Playbook: Configure Proxmox monitoring for crash investigation
+#
+# Usage:
+#   ansible-playbook playbooks/monitoring.yml
+#
+# Variables (set via vault or extra-vars):
+#   healthchecks_ping_url: Your healthchecks.io ping URL
+
+- name: Configure Proxmox monitoring
+  hosts: proxmox
+  become: true
+
+  roles:
+    - role: proxmox_monitoring

@@ -1,0 +1,21 @@
+---
+# Monitoring configuration defaults
+
+# Sysstat collection interval (minutes)
+proxmox_monitoring_sysstat_collect_interval: 10
+
+# Crash monitor logging interval (minutes via cron)
+proxmox_monitoring_crash_monitor_interval: 1
+
+# Log retention (days)
+proxmox_monitoring_log_retention_days: 90
+
+# Healthchecks.io ping URL (set via vault/external variable - DO NOT commit tokens)
+# Example: https://hc-ping.com/your-uuid-here
+proxmox_monitoring_healthchecks_ping_url: ""
+
+# Enable/disable individual monitoring components
+proxmox_monitoring_enable_sysstat: true
+proxmox_monitoring_enable_atop: true
+proxmox_monitoring_enable_crash_monitor: true
+proxmox_monitoring_enable_healthchecks: true
