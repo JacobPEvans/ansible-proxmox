@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-NIX_SHELL="${NIX_SHELL:-$HOME/git/nix-config/terraform/shells/terraform}"
+NIX_SHELL="${NIX_SHELL:-$HOME/git/nix-config/main/shells/infrastructure-automation}"
 
 usage() {
     echo "Usage: $0 <playbook> [ansible-playbook args...]"
