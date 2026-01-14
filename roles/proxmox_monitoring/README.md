@@ -60,7 +60,8 @@ After a crash/reboot, check these in order:
 
 ```bash
 # 1. Check crash-monitor logs (1-minute granularity)
-less /var/log/crash-monitor/$(date +%Y-%m-%d).log
+# Note: Replace YYYY-MM-DD with the date of the crash.
+less /var/log/crash-monitor/YYYY-MM-DD.log
 
 # 2. Check previous boot journal (if available)
 journalctl -b -1 | tail -100
@@ -69,8 +70,10 @@ journalctl -b -1 | tail -100
 ras-mc-ctl --errors
 
 # 4. Check atop historical data
-atop -r /var/log/atop/atop_$(date +%Y%m%d)
+# Note: Replace YYYYMMDD with the date of the crash.
+atop -r /var/log/atop/atop_YYYYMMDD
 
 # 5. Check sar data
-sar -r -f /var/log/sysstat/sa$(date +%d)
+# Note: Replace DD with the day of the month for the crash.
+sar -r -f /var/log/sysstat/saDD
 ```

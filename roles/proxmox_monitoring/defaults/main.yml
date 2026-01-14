@@ -1,11 +1,11 @@
 ---
 # Monitoring configuration defaults
 
-# Sysstat collection interval (minutes)
-proxmox_monitoring_sysstat_collect_interval: 10
-
 # Crash monitor logging interval (minutes via cron)
 proxmox_monitoring_crash_monitor_interval: 1
+
+# Healthchecks.io ping interval (minutes via cron)
+proxmox_monitoring_healthchecks_interval: 1
 
 # Log retention (days)
 proxmox_monitoring_log_retention_days: 90

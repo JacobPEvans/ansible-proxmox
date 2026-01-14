@@ -7,7 +7,7 @@
       - sysstat
       - atop
     state: present
-    update_cache: true
+    update_cache: yes
   when: proxmox_monitoring_enable_sysstat or proxmox_monitoring_enable_atop
 
 - name: Enable sysstat collection
@@ -61,7 +61,7 @@
       ansible.builtin.cron:
         name: "crash-monitor"
         job: "/usr/local/bin/crash-monitor.sh"
-        minute: "*"
+        minute: "*/{{ proxmox_monitoring_crash_monitor_interval }}"
         user: root
 
 - name: Configure healthchecks.io ping
@@ -75,5 +75,5 @@
         job: >-
           curl -fsS -m 10 --retry 5 -o /dev/null
           {{ proxmox_monitoring_healthchecks_ping_url }}
-        minute: "*"
+        minute: "*/{{ proxmox_monitoring_healthchecks_interval }}"
         user: root
