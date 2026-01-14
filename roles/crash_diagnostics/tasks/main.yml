@@ -9,7 +9,7 @@
   ansible.builtin.apt:
     name: "{{ crash_diagnostics_packages }}"
     state: present
-    update_cache: true
+    cache_valid_time: 3600
   tags:
     - crash_diagnostics
     - packages
@@ -23,20 +23,18 @@
     path: "{{ item }}"
     state: absent
   loop: "{{ crash_diagnostics_sysctl_cleanup }}"
-  notify: Reload sysctl
   tags:
     - crash_diagnostics
     - sysctl
 
-- name: Deploy sysctl crash diagnostics config
-  ansible.builtin.template:
-    src: sysctl.conf.j2
-    dest: "{{ crash_diagnostics_sysctl_file }}"
-    owner: root
-    group: root
-    mode: "0644"
-    backup: true
-  notify: Reload sysctl
+- name: Configure crash diagnostics sysctl settings
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop: "{{ crash_diagnostics_sysctl_settings }}"
   tags:
     - crash_diagnostics
     - sysctl

@@ -1,6 +1,6 @@
 ---
 # Standalone playbook for crash diagnostics configuration
-# Run with: ansible-playbook -i ../../local/hosts.yml playbooks/crash_diagnostics.yml
+# Run with: ansible-playbook -i inventory/hosts.yml playbooks/crash_diagnostics.yml
 
 - name: Configure crash diagnostics on Proxmox VE
   hosts: proxmox

@@ -16,7 +16,7 @@ Configures kernel crash diagnostics for Proxmox VE systems.
 ## Usage
 
 ```bash
-ansible-playbook -i ../../local/hosts.yml playbooks/crash_diagnostics.yml
+ansible-playbook -i inventory/hosts.yml playbooks/crash_diagnostics.yml
 ```
 
 ## Important Notes

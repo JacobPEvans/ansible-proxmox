@@ -1,14 +1,8 @@
 ---
 # Crash Diagnostics role handlers
 
-- name: Reload sysctl
-  ansible.builtin.command:
-    cmd: sysctl --system
-  changed_when: true
-  listen: Reload sysctl
-
 - name: Update GRUB
   ansible.builtin.command:
     cmd: update-grub
-  changed_when: true
+  changed_when: false
   listen: Update GRUB
