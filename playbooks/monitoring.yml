@@ -1,0 +1,13 @@
+---
+# Playbook: Configure Proxmox monitoring for crash investigation
+#
+# Usage: See local SECRETS_SETUP.md for environment configuration
+
+- name: Configure Proxmox monitoring
+  hosts: proxmox
+  become: true
+
+  roles:
+    - role: proxmox_monitoring
+      vars:
+        proxmox_monitoring_healthchecks_ping_url: "https://hc-ping.com/{{ lookup('env', 'HEALTHCHECK_PING_KEY') }}/proxmox"

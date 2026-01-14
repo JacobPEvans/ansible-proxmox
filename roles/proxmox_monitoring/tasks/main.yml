@@ -1,0 +1,79 @@
+---
+# Proxmox monitoring setup tasks
+
+- name: Install monitoring packages
+  ansible.builtin.apt:
+    name:
+      - sysstat
+      - atop
+    state: present
+    update_cache: yes
+  when: proxmox_monitoring_enable_sysstat or proxmox_monitoring_enable_atop
+
+- name: Enable sysstat collection
+  when: proxmox_monitoring_enable_sysstat
+  block:
+    - name: Enable sysstat service
+      ansible.builtin.systemd:
+        name: sysstat
+        enabled: true
+        state: started
+
+    - name: Enable sysstat collection timer
+      ansible.builtin.systemd:
+        name: sysstat-collect.timer
+        enabled: true
+        state: started
+
+    - name: Enable sysstat summary timer
+      ansible.builtin.systemd:
+        name: sysstat-summary.timer
+        enabled: true
+        state: started
+
+- name: Enable atop service
+  ansible.builtin.systemd:
+    name: atop
+    enabled: true
+    state: started
+  when: proxmox_monitoring_enable_atop
+
+- name: Configure crash monitor
+  when: proxmox_monitoring_enable_crash_monitor
+  block:
+    - name: Create crash monitor log directory
+      ansible.builtin.file:
+        path: /var/log/crash-monitor
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Deploy crash monitor script
+      ansible.builtin.template:
+        src: crash-monitor.sh.j2
+        dest: /usr/local/bin/crash-monitor.sh
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Configure crash monitor cron job
+      ansible.builtin.cron:
+        name: "crash-monitor"
+        job: "/usr/local/bin/crash-monitor.sh"
+        minute: "*/{{ proxmox_monitoring_crash_monitor_interval }}"
+        user: root
+
+- name: Configure healthchecks.io ping
+  when:
+    - proxmox_monitoring_enable_healthchecks
+    - proxmox_monitoring_healthchecks_ping_url | length > 0
+  block:
+    - name: Configure healthchecks cron job
+      ansible.builtin.cron:
+        name: "healthchecks-ping"
+        job: >-
+          curl -fsS -m 10 --retry 5 -o /dev/null
+          {{ proxmox_monitoring_healthchecks_ping_url }}
+        minute: "*/{{ proxmox_monitoring_healthchecks_interval }}"
+        user: root
