@@ -33,6 +33,10 @@ crash_diagnostics_packages:
   - mcelog           # Machine Check Exception logging daemon
   - edac-utils       # EDAC (Error Detection and Correction) utilities
 
+  # DIMM identification and memory testing
+  - i2c-tools        # decode-dimms for DIMM SPD data
+  - memtest86+       # Boot-time memory testing
+
 # =============================================================================
 # SYSCTL CONFIGURATION
 # =============================================================================
@@ -149,3 +153,26 @@ crash_diagnostics_grub_params:
 crash_diagnostics_sysctl_cleanup:
   - /etc/sysctl.d/99-debug.conf
   - /etc/sysctl.d/99-crash-diagnostics.conf
+
+# =============================================================================
+# BOOT-TIME MEMORY LOGGING
+# =============================================================================
+
+# Directory to store memory configuration logs
+crash_diagnostics_memory_log_dir: /var/log/memory-config
+
+# Number of boot logs to retain
+crash_diagnostics_memory_log_retention: 30
+
+# Script location
+crash_diagnostics_memory_logger_script: /usr/local/bin/memory-config-logger.sh
+
+# =============================================================================
+# REAL-TIME MCE MONITORING
+# =============================================================================
+
+# MCE monitor log file
+crash_diagnostics_mce_log_file: /var/log/mce-monitor.log
+
+# MCE monitor script location
+crash_diagnostics_mce_monitor_script: /usr/local/bin/mce-monitor.sh

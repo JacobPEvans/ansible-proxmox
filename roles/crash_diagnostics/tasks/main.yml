@@ -99,3 +99,89 @@
   tags:
     - crash_diagnostics
     - grub
+
+# =============================================================================
+# BOOT-TIME MEMORY LOGGING
+# =============================================================================
+
+- name: Create memory config log directory
+  ansible.builtin.file:
+    path: "{{ crash_diagnostics_memory_log_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - crash_diagnostics
+    - memory_logging
+
+- name: Deploy memory config logger script
+  ansible.builtin.template:
+    src: memory-config-logger.sh.j2
+    dest: "{{ crash_diagnostics_memory_logger_script }}"
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - crash_diagnostics
+    - memory_logging
+
+- name: Deploy memory config logger systemd service
+  ansible.builtin.template:
+    src: memory-config-logger.service.j2
+    dest: /etc/systemd/system/memory-config-logger.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+  tags:
+    - crash_diagnostics
+    - memory_logging
+
+- name: Enable memory config logger service
+  ansible.builtin.systemd:
+    name: memory-config-logger
+    enabled: true
+    daemon_reload: true
+  tags:
+    - crash_diagnostics
+    - memory_logging
+
+# =============================================================================
+# REAL-TIME MCE MONITORING
+# =============================================================================
+
+- name: Deploy MCE monitor script
+  ansible.builtin.template:
+    src: mce-monitor.sh.j2
+    dest: "{{ crash_diagnostics_mce_monitor_script }}"
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - crash_diagnostics
+    - mce_monitor
+
+- name: Deploy MCE monitor systemd service
+  ansible.builtin.template:
+    src: mce-monitor.service.j2
+    dest: /etc/systemd/system/mce-monitor.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+  tags:
+    - crash_diagnostics
+    - mce_monitor
+
+- name: Enable and start MCE monitor service
+  ansible.builtin.systemd:
+    name: mce-monitor
+    enabled: true
+    state: started
+    daemon_reload: true
+  # Only on physical hardware, not in containers/VMs
+  when: ansible_virtualization_type == 'NA' or ansible_virtualization_role == 'host'
+  tags:
+    - crash_diagnostics
+    - mce_monitor
