@@ -22,20 +22,16 @@ kernel_tuning_sysctl_file: /etc/sysctl.d/10-proxmox-tuning.conf
 # ------------------------------------------------------------------------------
 
 # Enable boot parameter management
-kernel_tuning_boot_params_enabled: true
-
-# Base boot parameters (required for Proxmox ZFS boot)
-# These are read from the system and preserved
-kernel_tuning_boot_params_preserve_base: true
+kernel_tuning_boot_params_enabled: false
 
 # Stability parameters for AMD Zen1 systems
 # Forces HPET clocksource to avoid TSC instability issues
 kernel_tuning_clocksource: hpet
 kernel_tuning_tsc_mode: unstable
 
-# Disable SMT (Simultaneous Multithreading) for Zen1 DIV0 bug protection
-# Set to true to add 'nosmt' parameter
-kernel_tuning_disable_smt: true
+# Disable SMT (Simultaneous Multithreading) for improved stability on some Zen1 systems
+# Set to true to add 'nosmt' parameter (workaround for rare arithmetic/lockup issues)
+kernel_tuning_disable_smt: false
 
 # Watchdog and panic parameters (crash diagnostics)
 kernel_tuning_nmi_watchdog: 1
@@ -49,4 +45,7 @@ kernel_tuning_mce_level: 3
 kernel_tuning_edac_report: 1
 
 # Crashkernel reservation for kdump (format: size or range:size)
+# WARNING: This overlaps with crash_diagnostics role which sets crashkernel via /etc/kernel/cmdline
+# Only enable if not using crash_diagnostics role for boot parameters
+kernel_tuning_manage_crashkernel: false
 kernel_tuning_crashkernel: "512M-:192M"
