@@ -18,6 +18,12 @@
 # MCE/EDAC HARDWARE ERROR MONITORING
 # =============================================================================
 
+# NOTE: rasdaemon is also managed by the common role (generic package + service),
+# which runs on all systems. This task provides additional constraint:
+# it re-ensures rasdaemon is started ONLY on physical hardware, not in VMs/containers.
+# The common role's simpler approach is sufficient for most deployments.
+# This can be removed if you prefer the common role as single source of truth.
+
 - name: Check if rasdaemon is available
   ansible.builtin.stat:
     path: /usr/sbin/rasdaemon
@@ -34,7 +40,6 @@
   when:
     - crash_diagnostics_rasdaemon_binary.stat.exists
     - ansible_virtualization_type == 'NA' or ansible_virtualization_role == 'host'
-  failed_when: false
   tags:
     - crash_diagnostics
     - rasdaemon

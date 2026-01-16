@@ -56,11 +56,11 @@ LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d).log"
 
   echo "--- Recent MCE Events (last hour) ---"
   # Check for recent Machine Check Exception events in journal
-  MCE_COUNT=$(journalctl --since="1 hour ago" 2>/dev/null | grep -ci "mce\|machine check" || echo 0)
+  MCE_COUNT=$(journalctl --since="1 hour ago" -g "mce|machine check" 2>/dev/null | wc -l || echo 0)
   echo "  MCE events in last hour: $MCE_COUNT"
   if [ "$MCE_COUNT" -gt 0 ]; then
     echo "  WARNING: Recent MCE hardware errors detected!"
-    journalctl --since="1 hour ago" 2>/dev/null | grep -i "mce\|machine check" | tail -5 || true
+    journalctl --since="1 hour ago" -g "mce|machine check" 2>/dev/null | tail -5 || true
   fi
 
   echo "--- CPU Throttling ---"

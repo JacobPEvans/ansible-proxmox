@@ -120,8 +120,8 @@ crash_diagnostics_sysctl_settings:
     value: "10000"
     comment: "High burst limit for printk"
 
-  # Note: kernel.print_fatal_signals and edac.edac_report are not available
-  # on all kernels. EDAC reporting is enabled via GRUB params instead.
+  # Note: kernel.print_fatal_signals is not available on all kernels.
+  # Note: edac.edac_report is a kernel module parameter (not sysctl) and is set via GRUB instead.
 
 # =============================================================================
 # GRUB CONFIGURATION
