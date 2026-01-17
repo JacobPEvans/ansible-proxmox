@@ -151,7 +151,6 @@
           ansible.builtin.set_fact:
             kernel_tuning_new_cmdline: >-
               {{ (kernel_tuning_base_params | trim) ~ ' ' ~ (kernel_tuning_stability_params | trim) | trim }}
-          when: true
 
         - name: Display planned cmdline change
           ansible.builtin.debug:
