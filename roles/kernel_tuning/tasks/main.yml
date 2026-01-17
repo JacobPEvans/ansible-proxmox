@@ -94,18 +94,18 @@
     - name: Configure GRUB boot parameters (Legacy BIOS)
       when: kernel_tuning_boot_method == 'grub'
       block:
+        # NOTE:
+        # - This drop-in appends stability parameters to any existing
+        #   GRUB_CMDLINE_LINUX_DEFAULT from /etc/default/grub and other
+        #   files in /etc/default/grub.d/, it does not replace them.
+        # - The order of kernel parameters on the command line can matter
+        #   for some options; parameters from this role will appear after
+        #   any previously defined GRUB_CMDLINE_LINUX_DEFAULT settings.
         - name: Create kernel tuning GRUB config
           ansible.builtin.copy:
             content: |
               # Ansible managed - kernel_tuning role
               # Kernel stability parameters
-              # NOTE:
-              # - This drop-in appends stability parameters to any existing
-              #   GRUB_CMDLINE_LINUX_DEFAULT from /etc/default/grub and other
-              #   files in /etc/default/grub.d/, it does not replace them.
-              # - The order of kernel parameters on the command line can matter
-              #   for some options; parameters from this role will appear after
-              #   any previously defined GRUB_CMDLINE_LINUX_DEFAULT settings.
               GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT:+$GRUB_CMDLINE_LINUX_DEFAULT }{{ kernel_tuning_stability_params }}"
             dest: /etc/default/grub.d/99-kernel-tuning.cfg
             owner: root
