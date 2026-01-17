@@ -48,11 +48,26 @@
     - name: Set boot method fact
       ansible.builtin.set_fact:
         kernel_tuning_boot_method: >-
-          {{ 'grub' if 'legacy bios' in (kernel_tuning_boot_status.stdout | lower) else 'uefi' }}
+          {%- if (kernel_tuning_boot_status is defined)
+                and (kernel_tuning_boot_status.stdout is defined)
+                and ('legacy bios' in (kernel_tuning_boot_status.stdout | lower)) -%}
+          grub
+          {%- elif (kernel_tuning_boot_status is defined)
+                  and (kernel_tuning_boot_status.rc is defined)
+                  and (kernel_tuning_boot_status.rc == 0) -%}
+          uefi
+          {%- else -%}
+          unknown
+          {%- endif -%}
 
     - name: Display detected boot method
       ansible.builtin.debug:
         msg: "Detected boot method: {{ kernel_tuning_boot_method }}"
+
+    - name: Warn when boot method could not be detected
+      ansible.builtin.debug:
+        msg: "Could not detect Proxmox boot method from 'proxmox-boot-tool status'; skipping boot parameter configuration."
+      when: kernel_tuning_boot_method == 'unknown'
 
     - name: Build stability parameters string
       ansible.builtin.set_fact:
@@ -66,10 +81,12 @@
                'edac_report=' ~ kernel_tuning_edac_report | string]
               + (['nosmt'] if (kernel_tuning_disable_smt | default(false) | bool) else []))
              | join(' ')) }}
+      when: kernel_tuning_boot_method != 'unknown'
 
     - name: Display stability parameters
       ansible.builtin.debug:
         msg: "Stability params: {{ kernel_tuning_stability_params }}"
+      when: kernel_tuning_boot_method != 'unknown'
 
     # --------------------------------------------------------------------------
     # Legacy BIOS (GRUB) - Use /etc/default/grub.d/
@@ -81,7 +98,14 @@
           ansible.builtin.copy:
             content: |
               # Ansible managed - kernel_tuning role
-              # AMD Zen1 stability parameters
+              # Kernel stability parameters
+              # NOTE:
+              # - This drop-in appends stability parameters to any existing
+              #   GRUB_CMDLINE_LINUX_DEFAULT from /etc/default/grub and other
+              #   files in /etc/default/grub.d/, it does not replace them.
+              # - The order of kernel parameters on the command line can matter
+              #   for some options; parameters from this role will appear after
+              #   any previously defined GRUB_CMDLINE_LINUX_DEFAULT settings.
               GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT:+$GRUB_CMDLINE_LINUX_DEFAULT }{{ kernel_tuning_stability_params }}"
             dest: /etc/default/grub.d/99-kernel-tuning.cfg
             owner: root
@@ -118,11 +142,16 @@
                  | join(' ') }}
           when: kernel_tuning_cmdline_stat.stat.exists
 
+        - name: Initialize base params if cmdline does not exist
+          ansible.builtin.set_fact:
+            kernel_tuning_base_params: ""
+          when: not kernel_tuning_cmdline_stat.stat.exists
+
         - name: Build complete cmdline
           ansible.builtin.set_fact:
             kernel_tuning_new_cmdline: >-
-              {{ kernel_tuning_base_params }} {{ kernel_tuning_stability_params | trim }}
-          when: kernel_tuning_cmdline_stat.stat.exists
+              {{ (kernel_tuning_base_params | trim) ~ ' ' ~ (kernel_tuning_stability_params | trim) | trim }}
+          when: true
 
         - name: Display planned cmdline change
           ansible.builtin.debug:
@@ -131,6 +160,11 @@
               New:     {{ kernel_tuning_new_cmdline }}
           changed_when: false
           when: kernel_tuning_cmdline_stat.stat.exists
+
+        - name: Warn when /etc/kernel/cmdline does not exist
+          ansible.builtin.debug:
+            msg: "WARNING: /etc/kernel/cmdline does not exist. This may indicate a non-UEFI or non-Proxmox system. Boot parameter configuration will be skipped."
+          when: not kernel_tuning_cmdline_stat.stat.exists
 
         - name: Write new kernel cmdline
           ansible.builtin.copy:
