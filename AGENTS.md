@@ -7,10 +7,10 @@ Ansible automation for Proxmox VE host configuration.
 Configure the Proxmox VE hypervisor itself:
 
 - Kernel parameters and tuning
-- Swap configuration
-- Host monitoring
-- Storage backends
-- Network configuration
+- Swap configuration (including ZFS-backed swap)
+- Host monitoring and metrics
+- Process and file descriptor limits
+- Crash diagnostics and troubleshooting data collection
 
 This is for **host-level** configuration only. Application VMs are
 configured by `ansible-proxmox-apps` and `ansible-splunk`.
@@ -44,16 +44,10 @@ doppler run -- uv run ansible-playbook playbooks/site.yml
 ### Common Operations
 
 - **Kernel tuning**: Updates sysctl parameters
-- **Swap management**: Configures swappiness
-- **Monitoring setup**: Installs node_exporter
+- **Swap management**: Configures swappiness and ZFS swap devices
+- **Monitoring setup**: Installs sysstat, atop, and crash-monitor
 
-## Secrets Management
-
-All secrets from Doppler:
-
-```bash
-doppler run -- uv run ansible-playbook playbooks/site.yml
-```
+Note: All playbooks use `doppler run` to inject secrets (SSH credentials, API tokens) from the Doppler `iac-conf-mgmt` project.
 
 ## Related Repositories
 
