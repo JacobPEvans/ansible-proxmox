@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Ansible runner - extracts SSH key from environment, runs playbook
-# When direnv is active, tools are on PATH via .envrc (nix shell auto-loaded)
-# Without direnv, set NIX_SHELL to the nix shell path for explicit activation
+# Prefers NIX_SHELL env var if set, otherwise uses ansible-playbook from PATH
+# (direnv automatically provides tools via .envrc nix shell)
 set -euo pipefail
 
 usage() {
@@ -28,13 +28,13 @@ trap cleanup EXIT
 echo "$PROXMOX_SSH_PRIVATE_KEY" > "$SSH_KEY_FILE"
 export ANSIBLE_PRIVATE_KEY_FILE="$SSH_KEY_FILE"
 
-# Run ansible-playbook - direnv provides tools on PATH, or use nix develop fallback
-if command -v ansible-playbook &>/dev/null; then
-    ansible-playbook "$PLAYBOOK" "$@"
-elif [[ -n "${NIX_SHELL:-}" ]]; then
+# Run ansible-playbook - prefer NIX_SHELL if set, otherwise use PATH
+if [[ -n "${NIX_SHELL:-}" ]]; then
     nix develop "$NIX_SHELL" --command ansible-playbook "$PLAYBOOK" "$@"
+elif command -v ansible-playbook &>/dev/null; then
+    ansible-playbook "$PLAYBOOK" "$@"
 else
     echo "ERROR: ansible-playbook not found on PATH and NIX_SHELL not set"
-    echo "Either activate direnv or set NIX_SHELL=~/git/nix-config/main/shells/infrastructure-automation"
+    echo "Either activate direnv or set NIX_SHELL to your nix flake path"
     exit 1
 fi

@@ -54,7 +54,14 @@ Note: All playbooks use `doppler run` to inject secrets (SSH credentials, API to
 This repo uses [direnv](https://direnv.net/) with a Nix flake to automatically
 activate the development shell. When you `cd` into the repo, direnv loads the
 `infrastructure-automation` Nix shell, providing ansible, ansible-lint, and
-other tools on PATH. Run `direnv allow` after cloning to enable.
+other tools on PATH.
+
+**Prerequisites:**
+
+- [direnv](https://direnv.net/) installed
+- [nix-direnv](https://github.com/nix-community/nix-direnv) installed (required for `use flake` support)
+
+After cloning, run `direnv allow` to enable automatic shell activation.
 
 ## Related Repositories
 
