@@ -3,7 +3,7 @@
 # item.key = container ID (string), item.value = desired features string
 
 - name: "Get current features for container {{ item.key }}"
-  ansible.builtin.command: "pct config {{ item.key }}"
+  ansible.builtin.command: "pct config '{{ item.key }}'"
   register: lxc_features_pct_config
   changed_when: false
 
@@ -23,7 +23,7 @@
   when: lxc_features_current != item.value
   block:
     - name: Stop container to apply feature changes  # {{ item.key }}
-      ansible.builtin.command: "pct stop {{ item.key }}"
+      ansible.builtin.command: "pct stop '{{ item.key }}'"
       register: lxc_features_stop_result
       failed_when:
         - lxc_features_stop_result.rc != 0
@@ -31,9 +31,9 @@
       changed_when: lxc_features_stop_result.rc == 0
 
     - name: "Set features on container {{ item.key }}"
-      ansible.builtin.command: "pct set {{ item.key }} --features {{ item.value }}"
+      ansible.builtin.command: "pct set '{{ item.key }}' --features '{{ item.value }}'"
       changed_when: true
 
     - name: "Start container {{ item.key }}"
-      ansible.builtin.command: "pct start {{ item.key }}"
+      ansible.builtin.command: "pct start '{{ item.key }}'"
       changed_when: true
