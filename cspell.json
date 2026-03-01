@@ -1,9 +1,12 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": [
+  "words": ["agentic", "backdoors", "Exfiltration", "exfiltration", "toolsets", "tinyurl", "unshallow", "unsanitized",
+    "agentic",
     "atop",
+    "backdoors",
     "direnv",
+    "exfiltration",
     "healthchecks",
     "hugepages",
     "iotop",
@@ -12,7 +15,11 @@
     "paramiko",
     "pyyaml",
     "sysstat",
+    "tinyurl",
+    "toolsets",
     "ulimits",
+    "unshallow",
+    "unsanitized",
     "worktree"
   ]
 }
