@@ -2,7 +2,7 @@ name: Issue Auto-Resolve
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -10,12 +10,7 @@ on:
         required: true
         type: string
 
-permissions:
-  actions: write
-  contents: write
-  id-token: write
-  issues: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   dispatch:
@@ -64,6 +59,12 @@ jobs:
 
   run-triage:
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
     uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@v0.7.0
     secrets: inherit
     with:
@@ -75,6 +76,12 @@ jobs:
       always() &&
       github.event_name == 'workflow_dispatch' &&
       (needs.run-triage.result == 'success' || needs.run-triage.result == 'skipped')
+    permissions:
+      actions: write
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
     uses: JacobPEvans/ai-workflows/.github/workflows/issue-resolver.yml@v0.7.0
     secrets: inherit
     with:

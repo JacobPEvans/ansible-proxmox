@@ -10,11 +10,7 @@ on:
         required: false
         type: string
 
-permissions:
-  actions: write
-  contents: write
-  id-token: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   dispatch:
@@ -35,6 +31,10 @@ jobs:
 
   review:
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     uses: JacobPEvans/ai-workflows/.github/workflows/post-merge-tests.yml@v0.7.0
     with:
       commit_sha: ${{ inputs.commit_sha || github.sha }}
