@@ -40,15 +40,15 @@ ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 
 ## What Gets Configured
 
-| Component               | What It Does                                    |
-| ----------------------- | ----------------------------------------------- |
-| **Common Packages**     | Installs utilities: htop, iotop, lm-sensors     |
-| **ZFS Swap**            | Creates optimized swap on ZFS                   |
-| **Kernel Tuning**       | Optimizes memory and disk settings              |
-| **System Limits**       | Increases file and process limits               |
-| **Crash Diagnostics**   | System crash diagnostics configuration          |
-| **LXC Features**        | LXC container feature flags (fuse, nesting)     |
-| **Proxmox Monitoring**  | Sets up historical monitoring (sysstat, atop)   |
+| Component               | What It Does                                       |
+| ----------------------- | -------------------------------------------------- |
+| **Common Packages**     | Installs utilities: htop, iotop, lm-sensors        |
+| **ZFS Swap**            | Creates optimized swap on ZFS                      |
+| **Kernel Tuning**       | Optimizes memory and disk settings                 |
+| **System Limits**       | Increases file and process limits                  |
+| **Crash Diagnostics**   | System crash diagnostics configuration             |
+| **LXC Features**        | LXC container feature flags (fuse, nesting)        |
+| **Proxmox Monitoring**  | Sets up historical monitoring (sysstat, atop)      |
 
 ### Why Each Matters
 
@@ -136,7 +136,7 @@ This project includes automated tests using [Molecule][molecule]:
 
 ```bash
 # Install test dependencies
-pip install molecule ansible-core
+pip install molecule molecule-docker ansible-core
 
 # Run tests
 molecule test
