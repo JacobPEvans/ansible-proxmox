@@ -135,10 +135,7 @@ Tools provided: `ansible`, `ansible-lint`, `molecule`, `sops`, `age`,
 This project includes automated tests using [Molecule][molecule]:
 
 ```bash
-# Install test dependencies
-pip install molecule molecule-docker ansible-core
-
-# Run tests
+# Run tests (molecule is provided by the Nix dev environment)
 molecule test
 ```
 

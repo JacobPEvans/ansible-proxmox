@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Role: `zfs_swap` - ZFS ZVOL swap configuration (96 GB default)
 - Role: `kernel_tuning` - Sysctl settings for NVMe and memory management
 - Role: `ulimits` - System-wide file descriptor and process limits
+- Role: `crash_diagnostics` - Kernel crash diagnostics and hardware error monitoring
+- Role: `proxmox_monitoring` - System monitoring (sysstat, atop, crash-monitor, healthchecks.io)
+- Role: `lxc_features` - LXC container feature flags (fuse, nesting, keyctl)
 - GitHub Actions workflow for ansible-lint
 - GitHub Actions workflow for Molecule tests
 - Molecule test configuration for role validation
