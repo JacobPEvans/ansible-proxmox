@@ -1,7 +1,7 @@
 ---
 # Playbook: Configure Proxmox monitoring for crash investigation
 #
-# Usage: See local SECRETS_SETUP.md for environment configuration
+# Usage: See README.md or CLAUDE.md for environment configuration
 
 - name: Configure Proxmox monitoring
   hosts: proxmox
