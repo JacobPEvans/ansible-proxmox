@@ -53,8 +53,7 @@ Note: All playbooks use `doppler run` to inject secrets (SSH credentials, API to
 
 This repo uses [direnv](https://direnv.net/) with a Nix flake to automatically
 activate the development shell. When you `cd` into the repo, direnv loads the
-`infrastructure-automation` Nix shell, providing ansible, ansible-lint, and
-other tools on PATH.
+Nix development shell, providing ansible, ansible-lint, and other tools on PATH.
 
 **Prerequisites:**
 
@@ -65,6 +64,6 @@ After cloning, run `direnv allow` to enable automatic shell activation.
 
 ## Related Repositories
 
-- **terraform-proxmox**: VM/container provisioning
+- **terraform-proxmox*: VM/container provisioning
 - **ansible-proxmox-apps**: Application deployment on VMs
-- **ansible-splunk**: Splunk configuration
+- **ansible-splunk*: Splunk configuration
