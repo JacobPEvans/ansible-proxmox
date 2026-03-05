@@ -42,6 +42,8 @@ External uptime monitoring ping (optional).
 | `proxmox_monitoring_enable_crash_monitor` | `true` | Enable script |
 | `proxmox_monitoring_enable_healthchecks` | `true` | Enable ping |
 | `proxmox_monitoring_healthchecks_ping_url` | `""` | Ping URL (secret) |
+| `proxmox_monitoring_crash_monitor_interval` | `1` | Crash monitor cron interval (minutes) |
+| `proxmox_monitoring_healthchecks_interval` | `1` | Healthchecks.io ping interval (minutes) |
 | `proxmox_monitoring_log_retention_days` | `90` | Days to retain |
 
 ## Usage

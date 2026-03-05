@@ -144,7 +144,7 @@ molecule test
 ### Pre-commit Hooks
 
 ```bash
-pip install pre-commit
+# pre-commit is provided by the Nix dev environment
 pre-commit install
 ```
 
