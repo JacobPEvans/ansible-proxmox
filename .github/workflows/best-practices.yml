@@ -10,6 +10,10 @@ permissions:
   id-token: write
   pull-requests: write
 
+concurrency:
+  group: best-practices
+  cancel-in-progress: true
+
 jobs:
   best-practices:
     uses: JacobPEvans/ai-workflows/.github/workflows/best-practices.yml@v0.8.0
