@@ -8,10 +8,11 @@ on:
 permissions:
   contents: read
   id-token: write
-  pull-requests: write
+  issues: write
+  pull-requests: read
 
 concurrency:
-  group: best-practices
+  group: best-practices-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
