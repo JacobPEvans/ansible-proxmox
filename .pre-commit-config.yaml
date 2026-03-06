@@ -20,12 +20,13 @@ repos:
       - id: ansible-lint
         name: ansible-lint
         language: python
-        entry: python3 -m ansiblelint -v --force-color
+        language_version: python3.12
+        entry: ansible-lint -v --force-color
         pass_filenames: false
         always_run: true
         additional_dependencies:
           - ansible-lint==6.22.2
-          - ansible-core==2.16.2
+          - ansible-core>=2.18.0,<2.19.0
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.48.0
