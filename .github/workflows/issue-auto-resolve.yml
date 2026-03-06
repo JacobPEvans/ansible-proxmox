@@ -65,7 +65,7 @@ jobs:
       id-token: write
       issues: write
       pull-requests: write
-    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@v0.9.0
+    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@v0.9.1
     secrets: inherit
     with:
       issue_number: ${{ inputs.issue_number }}
@@ -82,7 +82,7 @@ jobs:
       id-token: write
       issues: write
       pull-requests: write
-    uses: JacobPEvans/ai-workflows/.github/workflows/issue-resolver.yml@v0.9.0
+    uses: JacobPEvans/ai-workflows/.github/workflows/issue-resolver.yml@v0.9.1
     secrets: inherit
     with:
       repo_context: "Ansible playbooks and roles for configuring Proxmox VE host"
