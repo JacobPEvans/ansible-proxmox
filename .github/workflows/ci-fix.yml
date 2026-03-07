@@ -22,7 +22,7 @@ jobs:
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_branch != 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: JacobPEvans/ai-workflows/.github/workflows/ci-fix.yml@v0.9.3
+    uses: JacobPEvans/ai-workflows/.github/workflows/ci-fix.yml@v0.9.4
     with:
       repo_context: "Ansible playbooks and roles for configuring Proxmox VE host"
       ci_structure: "ansible-lint.yml (Ansible Lint checks) + molecule.yml (Molecule Test integration tests)"
