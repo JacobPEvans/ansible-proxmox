@@ -35,7 +35,7 @@ jobs:
       contents: write
       id-token: write
       pull-requests: write
-    uses: JacobPEvans/ai-workflows/.github/workflows/post-merge-tests.yml@v0.9.1
+    uses: JacobPEvans/ai-workflows/.github/workflows/post-merge-tests.yml@v0.9.2
     with:
       commit_sha: ${{ inputs.commit_sha || github.sha }}
     secrets: inherit
