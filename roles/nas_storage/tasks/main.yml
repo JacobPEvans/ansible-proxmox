@@ -1,0 +1,105 @@
+---
+# NAS Storage role tasks
+# Provisions a ZFS dataset and Samba share on the Proxmox host.
+# ZFS and systemd tasks are skipped in Docker containers (molecule testing).
+
+# ============================================================
+# ZFS Dataset
+# ============================================================
+
+- name: Check if ZFS dataset exists
+  ansible.builtin.command:
+    cmd: "zfs list {{ nas_storage_zfs_dataset }}"
+  register: nas_storage_zfs_check
+  changed_when: false
+  failed_when: false
+  when: ansible_virtualization_type != 'docker'
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
+- name: Create ZFS dataset
+  ansible.builtin.command:
+    cmd: >-
+      zfs create -o mountpoint={{ nas_storage_mount_point }}
+      {{ nas_storage_zfs_dataset }}
+  when:
+    - ansible_virtualization_type != 'docker'
+    - nas_storage_zfs_check.rc != 0
+  changed_when: true
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
+- name: Set ZFS quota
+  ansible.builtin.command:
+    cmd: "zfs set quota={{ nas_storage_zfs_quota }} {{ nas_storage_zfs_dataset }}"
+  when: ansible_virtualization_type != 'docker'
+  changed_when: true
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
+# ============================================================
+# Subdirectories
+# ============================================================
+
+- name: Create NAS subdirectories
+  ansible.builtin.file:
+    path: "{{ nas_storage_mount_point }}/{{ item }}"
+    state: directory
+    owner: root
+    group: nas
+    mode: "0775"
+  loop: "{{ nas_storage_directories }}"
+  when: ansible_virtualization_type != 'docker'
+  tags:
+    - nas_storage
+
+# ============================================================
+# Samba group
+# ============================================================
+
+- name: Create nas group
+  ansible.builtin.group:
+    name: nas
+    state: present
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+# ============================================================
+# Samba installation and configuration
+# ============================================================
+
+- name: Install Samba
+  ansible.builtin.apt:
+    name: samba
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Template smb.conf
+  ansible.builtin.template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart smbd
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Enable and start smbd
+  ansible.builtin.systemd:
+    name: smbd
+    enabled: true
+    state: started
+  when: ansible_virtualization_type != 'docker'
+  tags:
+    - nas_storage
+    - nas_storage_samba

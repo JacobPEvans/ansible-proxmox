@@ -23,6 +23,9 @@
     "ulimits",
     "unshallow",
     "unsanitized",
+    "rpool",
+    "smbpasswd",
+    "usermod",
     "worktree"
   ]
 }

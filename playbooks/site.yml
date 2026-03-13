@@ -38,3 +38,7 @@
     - role: lxc_features
       tags:
         - lxc_features
+
+    - role: nas_storage
+      tags:
+        - nas_storage
