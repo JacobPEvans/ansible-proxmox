@@ -31,14 +31,38 @@
     - nas_storage
     - nas_storage_zfs
 
+- name: Get current ZFS quota
+  ansible.builtin.command:
+    cmd: "zfs get -H -o value quota {{ nas_storage_zfs_dataset }}"
+  register: nas_storage_zfs_current_quota
+  changed_when: false
+  when: ansible_virtualization_type != 'docker'
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
 - name: Set ZFS quota
   ansible.builtin.command:
     cmd: "zfs set quota={{ nas_storage_zfs_quota }} {{ nas_storage_zfs_dataset }}"
-  when: ansible_virtualization_type != 'docker'
+  when:
+    - ansible_virtualization_type != 'docker'
+    - nas_storage_zfs_current_quota.stdout | default('') != nas_storage_zfs_quota
   changed_when: true
   tags:
     - nas_storage
     - nas_storage_zfs
+
+# ============================================================
+# Samba group (must exist before directory creation)
+# ============================================================
+
+- name: Create nas group
+  ansible.builtin.group:
+    name: nas
+    state: present
+  tags:
+    - nas_storage
+    - nas_storage_samba
 
 # ============================================================
 # Subdirectories
@@ -55,18 +79,6 @@
   when: ansible_virtualization_type != 'docker'
   tags:
     - nas_storage
-
-# ============================================================
-# Samba group
-# ============================================================
-
-- name: Create nas group
-  ansible.builtin.group:
-    name: nas
-    state: present
-  tags:
-    - nas_storage
-    - nas_storage_samba
 
 # ============================================================
 # Samba installation and configuration

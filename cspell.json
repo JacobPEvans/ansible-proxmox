@@ -6,12 +6,15 @@
     "atop",
     "backdoors",
     "direnv",
+    "EDAC",
     "exfiltration",
     "healthcheck",
     "healthchecks",
     "hugepages",
     "iotop",
     "jsondiff",
+    "kdump",
+    "keyctl",
     "mgmt",
     "nofile",
     "paramiko",
@@ -22,10 +25,12 @@
     "toolsets",
     "ulimits",
     "unshallow",
+    "UEFI",
     "unsanitized",
     "rpool",
     "smbpasswd",
     "usermod",
-    "worktree"
+    "worktree",
+    "ZVOL"
   ]
 }
