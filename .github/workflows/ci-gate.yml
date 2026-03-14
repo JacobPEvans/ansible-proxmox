@@ -1,0 +1,119 @@
+---
+# CI Gate - Conditional Required Checks
+#
+# FRAMEWORK: Merge Gatekeeper Pattern
+# ====================================
+# Solves: "Required checks that only run when relevant files change"
+#
+# Problem: GitHub branch protection only supports "always required" or "not required"
+#          Path-filtered workflows that don't run = pending forever = blocks merge
+#
+# Solution: Single workflow that:
+# 1. Always triggers on ALL PRs (no path filters at workflow level)
+# 2. Detects which file categories changed
+# 3. Calls reusable workflows conditionally (skipped = success)
+# 4. Final "Merge Gate" job aggregates all results
+#
+# Branch Protection: Set ONLY "Merge Gate" as required check
+#
+# Adding New Checks:
+# 1. Create reusable workflow: _your-check.yml with `on: workflow_call`
+# 2. Add filter pattern under `changes.steps.filter.with.filters`
+# 3. Add job that calls the reusable workflow with appropriate `if:` condition
+# 4. Add job name to `gate.needs` array and `allowed-skips`
+
+name: CI Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # ==========================================================================
+  # CHANGE DETECTION
+  # ==========================================================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ansible: ${{ steps.filter.outputs.ansible }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ansible:
+              - '**.yml'
+              - '**.yaml'
+              - '**.j2'
+              - 'roles/**'
+              - 'playbooks/**'
+              - 'inventory/**'
+              - 'molecule/**'
+              - '.ansible-lint'
+              - 'requirements.yml'
+
+  # ==========================================================================
+  # CONDITIONAL CHECKS (inline jobs)
+  # ==========================================================================
+  lint:
+    name: Ansible Lint
+    needs: changes
+    if: needs.changes.outputs.ansible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@v26
+
+  molecule:
+    name: Molecule Test
+    needs: changes
+    if: needs.changes.outputs.ansible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'molecule>=25.0.0' 'molecule-docker>=2.1.0' 'ansible-core>=2.18.0,<2.19.0'
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r requirements.yml
+      - name: Run molecule test
+        run: molecule test
+        env:
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+  # ==========================================================================
+  # MERGE GATE - The ONLY required check in branch protection
+  # ==========================================================================
+  gate:
+    name: Merge Gate
+    needs: [changes, lint, molecule]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all results
+        uses: re-actors/alls-green@release/v1
+        with:
+          allowed-skips: lint, molecule
+          jobs: ${{ toJSON(needs) }}
