@@ -1,0 +1,19 @@
+---
+# NAS Storage role defaults
+
+# ZFS dataset configuration
+nas_storage_zfs_dataset: "rpool/data/nas"
+nas_storage_zfs_quota: "1T"
+nas_storage_mount_point: "/mnt/nas"
+
+# Samba configuration
+nas_storage_smb_share_name: "nas"
+nas_storage_smb_workgroup: "WORKGROUP"
+nas_storage_smb_valid_users: "@nas"
+
+# Subdirectories to create under mount point
+nas_storage_directories:
+  - "huggingface/hub"
+  - "ollama/models"
+  - "media"
+  - "backups"

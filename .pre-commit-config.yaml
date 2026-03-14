@@ -20,7 +20,7 @@ repos:
       - id: ansible-lint
         name: ansible-lint
         language: python
-        language_version: python3.12
+        language_version: python3.13
         entry: ansible-lint -v --force-color
         pass_filenames: false
         always_run: true

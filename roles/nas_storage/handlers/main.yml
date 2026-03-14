@@ -1,0 +1,9 @@
+---
+# NAS Storage role handlers
+
+- name: Restart smbd
+  ansible.builtin.systemd:
+    name: smbd
+    state: restarted
+  when: ansible_virtualization_type != 'docker'
+  listen: Restart smbd

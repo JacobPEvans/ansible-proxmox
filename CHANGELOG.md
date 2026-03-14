@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.0.0...v1.1.0) (2026-03-11)
 
-
 ### Features
 
 * add daily repo health audit agentic workflow ([#75](https://github.com/JacobPEvans/ansible-proxmox/issues/75)) ([061bc4a](https://github.com/JacobPEvans/ansible-proxmox/commit/061bc4a6feff2ecb7f695086a8e9a65b8e1a0f64))
@@ -23,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **monitoring:** add MCE/EDAC hardware error detection ([#34](https://github.com/JacobPEvans/ansible-proxmox/issues/34)) ([e67d0ce](https://github.com/JacobPEvans/ansible-proxmox/commit/e67d0ce06a9f8c9ea45aa20ade4da5ae5bb9d207))
 * **renovate:** extend shared preset, remove duplicated rules ([ffc73cc](https://github.com/JacobPEvans/ansible-proxmox/commit/ffc73cc1328a59501c3114bcc3231db85a8f6324))
 
-
 ### Bug Fixes
 
 * change .docs symlink to relative path ([#40](https://github.com/JacobPEvans/ansible-proxmox/issues/40)) ([a78c87d](https://github.com/JacobPEvans/ansible-proxmox/commit/a78c87d3cf938e8255ac2e0e9b7a8f20a891cc37))
@@ -36,19 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial repository structure
-- Role: `common` - Base packages and SSH configuration
-- Role: `zfs_swap` - ZFS ZVOL swap configuration (96 GB default)
-- Role: `kernel_tuning` - Sysctl settings for NVMe and memory management
-- Role: `ulimits` - System-wide file descriptor and process limits
-- Role: `crash_diagnostics` - Kernel crash diagnostics and hardware error monitoring
-- Role: `proxmox_monitoring` - System monitoring (sysstat, atop, crash-monitor, healthchecks.io)
-- Role: `lxc_features` - LXC container feature flags (fuse, nesting, keyctl)
-- GitHub Actions workflow for ansible-lint
-- GitHub Actions workflow for Molecule tests
-- Molecule test configuration for role validation
-- Renovate configuration for automated dependency updates
-- Pre-commit hooks configuration
+* Initial repository structure
+* Role: `common` - Base packages and SSH configuration
+* Role: `zfs_swap` - ZFS ZVOL swap configuration (96 GB default)
+* Role: `kernel_tuning` - Sysctl settings for NVMe and memory management
+* Role: `ulimits` - System-wide file descriptor and process limits
+* Role: `crash_diagnostics` - Kernel crash diagnostics and hardware error monitoring
+* Role: `proxmox_monitoring` - System monitoring (sysstat, atop, crash-monitor, healthchecks.io)
+* Role: `lxc_features` - LXC container feature flags (fuse, nesting, keyctl)
+* GitHub Actions workflow for ansible-lint
+* GitHub Actions workflow for Molecule tests
+* Molecule test configuration for role validation
+* Renovate configuration for automated dependency updates
+* Pre-commit hooks configuration
 
 [Unreleased]: https://github.com/JacobPEvans/ansible-proxmox/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/JacobPEvans/ansible-proxmox/releases/tag/v1.0.0
