@@ -31,9 +31,34 @@
     - nas_storage
     - nas_storage_zfs
 
+- name: Get current ZFS mountpoint
+  ansible.builtin.command:
+    cmd: "zfs get -H -o value mountpoint {{ nas_storage_zfs_dataset }}"
+  register: nas_storage_zfs_current_mountpoint
+  changed_when: false
+  when:
+    - ansible_virtualization_type != 'docker'
+    - nas_storage_zfs_check.rc == 0
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
+- name: Fix ZFS mountpoint drift
+  ansible.builtin.command:
+    cmd: "zfs set mountpoint={{ nas_storage_mount_point }} {{ nas_storage_zfs_dataset }}"
+  when:
+    - ansible_virtualization_type != 'docker'
+    - nas_storage_zfs_check.rc == 0
+    - nas_storage_zfs_current_mountpoint.stdout != nas_storage_mount_point
+  changed_when: true
+  tags:
+    - nas_storage
+    - nas_storage_zfs
+
+# Quota values must use ZFS canonical format (e.g., 1T not 1024G)
 - name: Get current ZFS quota
   ansible.builtin.command:
-    cmd: "zfs get -H -o value quota {{ nas_storage_zfs_dataset }}"
+    cmd: "zfs get -Hp -o value quota {{ nas_storage_zfs_dataset }}"
   register: nas_storage_zfs_current_quota
   changed_when: false
   when: ansible_virtualization_type != 'docker'
@@ -94,6 +119,17 @@
     - nas_storage
     - nas_storage_samba
 
+- name: Create Samba include directory
+  ansible.builtin.file:
+    path: /etc/samba/smb.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
 - name: Template smb.conf
   ansible.builtin.template:
     src: smb.conf.j2
@@ -101,6 +137,20 @@
     owner: root
     group: root
     mode: "0644"
+    validate: 'testparm -s %s 2>/dev/null'
+  notify: Restart smbd
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Template nas share configuration
+  ansible.builtin.template:
+    src: nas.conf.j2
+    dest: /etc/samba/smb.conf.d/nas.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: 'testparm -s %s 2>/dev/null'
   notify: Restart smbd
   tags:
     - nas_storage
