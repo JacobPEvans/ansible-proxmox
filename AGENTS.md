@@ -38,7 +38,7 @@ configured by `ansible-proxmox-apps` and `ansible-splunk`.
 ### Running Playbooks
 
 ```bash
-doppler run -- uv run ansible-playbook playbooks/site.yml
+doppler run -- ansible-playbook playbooks/site.yml
 ```
 
 ### Common Operations
