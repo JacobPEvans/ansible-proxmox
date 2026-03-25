@@ -5,7 +5,7 @@ This repo provides all tools via a Nix dev shell (flake.nix + .envrc).
 ## Rules
 
 - Run ansible, ansible-lint, molecule, and all Python tools as bare commands
-- If a tool is not found on PATH, use `direnv exec . <command>` — never install globally
+- If a tool is not found on PATH, ensure direnv is active (`direnv allow`). For one-off execution, use `direnv exec . <command>` — never install globally
 - NEVER use `pipx`, `pip install`, or `uv pip install` to install tools
 - NEVER prefix commands with `uv run` — tools are on PATH from the dev shell
 
