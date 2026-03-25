@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.1.0...v1.2.0) (2026-03-25)
+
+
+### Features
+
+* add nas_storage role for Samba NAS provisioning on ZFS ([#78](https://github.com/JacobPEvans/ansible-proxmox/issues/78)) ([79ab2fe](https://github.com/JacobPEvans/ansible-proxmox/commit/79ab2fe3da92d89db20fafbb6a734c2c3bb83bf6))
+
+
+### Bug Fixes
+
+* add release-please config for manifest mode ([cecbda8](https://github.com/JacobPEvans/ansible-proxmox/commit/cecbda87c100f69b06c3aa877593904231a6c718))
+* **ci:** add pull-requests: write for release-please auto-approval ([#82](https://github.com/JacobPEvans/ansible-proxmox/issues/82)) ([80eb5bf](https://github.com/JacobPEvans/ansible-proxmox/commit/80eb5bf5f67b5ca900c33a4dd9afca0f9b5c6cde))
+* **ci:** implement Merge Gatekeeper pattern ([#79](https://github.com/JacobPEvans/ansible-proxmox/issues/79)) ([d64ffd5](https://github.com/JacobPEvans/ansible-proxmox/commit/d64ffd531ae5ee05fb53dffae71f963615621c88))
+* replace uv run with bare commands for Nix dev shell ([#85](https://github.com/JacobPEvans/ansible-proxmox/issues/85)) ([805e015](https://github.com/JacobPEvans/ansible-proxmox/commit/805e015b093525e382e35dbf7d4b271cbba06249))
+* sync release-please permissions, VERSION, and remove redundant config ([fa36f25](https://github.com/JacobPEvans/ansible-proxmox/commit/fa36f259703b113bf7e0d7a05ac5868f26e29d36))
+
 ## [1.1.0](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.0.0...v1.1.0) (2026-03-11)
 
 ### Features
