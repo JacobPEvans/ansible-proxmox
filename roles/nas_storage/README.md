@@ -19,7 +19,7 @@ Provisions a ZFS dataset and Samba share on the Proxmox host for centralized NAS
 This role is included in `playbooks/site.yml`. To apply only this role:
 
 ```bash
-doppler run -- uv run ansible-playbook playbooks/site.yml --tags nas_storage
+doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage
 ```
 
 ## Usage
@@ -27,8 +27,8 @@ doppler run -- uv run ansible-playbook playbooks/site.yml --tags nas_storage
 Run the full site playbook with the `nas_storage` tag:
 
 ```bash
-doppler run -- uv run ansible-playbook playbooks/site.yml --tags nas_storage --check
-doppler run -- uv run ansible-playbook playbooks/site.yml --tags nas_storage
+doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage --check
+doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage
 ```
 
 After provisioning, add users to the `nas` group and set their Samba password:

@@ -39,17 +39,17 @@ and exports `ANSIBLE_PRIVATE_KEY_FILE` pointing to it.
 # Via run script (handles SSH key from env)
 doppler run -- ./scripts/run-ansible.sh playbooks/site.yml
 
-# Or via uv directly
-doppler run -- uv run ansible-playbook \
+# Or directly
+doppler run -- ansible-playbook \
   -i inventory/hosts.yml playbooks/site.yml
 
 # Dry run
-doppler run -- uv run ansible-playbook \
+doppler run -- ansible-playbook \
   -i inventory/hosts.yml playbooks/site.yml \
   --check --diff
 
 # Lint
-uv run ansible-lint
+ansible-lint
 ```
 
 ## Dev Environment
