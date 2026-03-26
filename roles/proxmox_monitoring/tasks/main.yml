@@ -10,6 +10,42 @@
     update_cache: yes
   when: proxmox_monitoring_enable_sysstat or proxmox_monitoring_enable_atop
 
+- name: Create systemd override directories for monitoring services
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item.name }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - name: sysstat
+      enabled: "{{ proxmox_monitoring_enable_sysstat }}"
+    - name: atop
+      enabled: "{{ proxmox_monitoring_enable_atop }}"
+  when: item.enabled
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Configure restart policies for monitoring services
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      Restart=on-failure
+      RestartSec=5s
+    dest: "/etc/systemd/system/{{ item.name }}.service.d/restart-policy.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - name: sysstat
+      enabled: "{{ proxmox_monitoring_enable_sysstat }}"
+    - name: atop
+      enabled: "{{ proxmox_monitoring_enable_atop }}"
+  when: item.enabled
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+
 - name: Enable sysstat collection
   when: proxmox_monitoring_enable_sysstat
   block:

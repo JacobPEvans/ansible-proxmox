@@ -17,6 +17,40 @@
     - common
     - packages
 
+- name: Create systemd override directories for common services
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - docker
+    - rasdaemon
+    - lm-sensors
+  tags:
+    - common
+    - services
+
+- name: Configure restart policies for common services
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      Restart=on-failure
+      RestartSec=5s
+    dest: "/etc/systemd/system/{{ item }}.service.d/restart-policy.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - docker
+    - rasdaemon
+    - lm-sensors
+  notify: Reload systemd daemon
+  tags:
+    - common
+    - services
+
 - name: Enable rasdaemon service
   ansible.builtin.systemd:
     name: rasdaemon
