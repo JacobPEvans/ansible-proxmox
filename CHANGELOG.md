@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.2.0...v1.2.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* add systemd restart policies for all native services ([#87](https://github.com/JacobPEvans/ansible-proxmox/issues/87)) ([d731e44](https://github.com/JacobPEvans/ansible-proxmox/commit/d731e44c7332080479a14b85c179ac4461fc9292))
+
 ## [1.2.0](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.1.0...v1.2.0) (2026-03-25)
 
 
