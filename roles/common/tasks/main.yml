@@ -17,77 +17,36 @@
     - common
     - packages
 
-- name: Create docker systemd override directory
+- name: Create systemd override directories for common services
   ansible.builtin.file:
-    path: /etc/systemd/system/docker.service.d
+    path: "/etc/systemd/system/{{ item }}.service.d"
     state: directory
     owner: root
     group: root
     mode: "0755"
+  loop:
+    - docker
+    - rasdaemon
+    - lm-sensors
   tags:
     - common
     - services
 
-- name: Configure docker restart policy
+- name: Configure restart policies for common services
   ansible.builtin.copy:
     content: |
       [Service]
       Restart=on-failure
       RestartSec=5s
-    dest: /etc/systemd/system/docker.service.d/restart-policy.conf
+    dest: "/etc/systemd/system/{{ item }}.service.d/restart-policy.conf"
     owner: root
     group: root
     mode: "0644"
-  tags:
-    - common
-    - services
-
-- name: Create rasdaemon systemd override directory
-  ansible.builtin.file:
-    path: /etc/systemd/system/rasdaemon.service.d
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  tags:
-    - common
-    - services
-
-- name: Configure rasdaemon restart policy
-  ansible.builtin.copy:
-    content: |
-      [Service]
-      Restart=on-failure
-      RestartSec=5s
-    dest: /etc/systemd/system/rasdaemon.service.d/restart-policy.conf
-    owner: root
-    group: root
-    mode: "0644"
-  tags:
-    - common
-    - services
-
-- name: Create lm-sensors systemd override directory
-  ansible.builtin.file:
-    path: /etc/systemd/system/lm-sensors.service.d
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  tags:
-    - common
-    - services
-
-- name: Configure lm-sensors restart policy
-  ansible.builtin.copy:
-    content: |
-      [Service]
-      Restart=on-failure
-      RestartSec=5s
-    dest: /etc/systemd/system/lm-sensors.service.d/restart-policy.conf
-    owner: root
-    group: root
-    mode: "0644"
+  loop:
+    - docker
+    - rasdaemon
+    - lm-sensors
+  notify: Reload systemd daemon
   tags:
     - common
     - services

@@ -10,27 +10,41 @@
     update_cache: yes
   when: proxmox_monitoring_enable_sysstat or proxmox_monitoring_enable_atop
 
-- name: Configure sysstat systemd restart policy
-  when: proxmox_monitoring_enable_sysstat
-  block:
-    - name: Create sysstat systemd override directory
-      ansible.builtin.file:
-        path: /etc/systemd/system/sysstat.service.d
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
+- name: Create systemd override directories for monitoring services
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item.name }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - name: sysstat
+      enabled: "{{ proxmox_monitoring_enable_sysstat }}"
+    - name: atop
+      enabled: "{{ proxmox_monitoring_enable_atop }}"
+  when: item.enabled
+  loop_control:
+    label: "{{ item.name }}"
 
-    - name: Configure sysstat restart policy
-      ansible.builtin.copy:
-        content: |
-          [Service]
-          Restart=on-failure
-          RestartSec=5s
-        dest: /etc/systemd/system/sysstat.service.d/restart-policy.conf
-        owner: root
-        group: root
-        mode: "0644"
+- name: Configure restart policies for monitoring services
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      Restart=on-failure
+      RestartSec=5s
+    dest: "/etc/systemd/system/{{ item.name }}.service.d/restart-policy.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - name: sysstat
+      enabled: "{{ proxmox_monitoring_enable_sysstat }}"
+    - name: atop
+      enabled: "{{ proxmox_monitoring_enable_atop }}"
+  when: item.enabled
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
 
 - name: Enable sysstat collection
   when: proxmox_monitoring_enable_sysstat
@@ -52,28 +66,6 @@
         name: sysstat-summary.timer
         enabled: true
         state: started
-
-- name: Configure atop systemd restart policy
-  when: proxmox_monitoring_enable_atop
-  block:
-    - name: Create atop systemd override directory
-      ansible.builtin.file:
-        path: /etc/systemd/system/atop.service.d
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Configure atop restart policy
-      ansible.builtin.copy:
-        content: |
-          [Service]
-          Restart=on-failure
-          RestartSec=5s
-        dest: /etc/systemd/system/atop.service.d/restart-policy.conf
-        owner: root
-        group: root
-        mode: "0644"
 
 - name: Enable atop service
   ansible.builtin.systemd:

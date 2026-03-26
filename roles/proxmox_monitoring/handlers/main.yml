@@ -1,5 +1,5 @@
 ---
-# Common role handlers
+# Proxmox monitoring role handlers
 
 - name: Reload systemd daemon
   ansible.builtin.systemd:
