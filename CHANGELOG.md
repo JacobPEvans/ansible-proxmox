@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.2.1...v1.2.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* use nix-devenv ansible shell instead of local flake.nix ([#89](https://github.com/JacobPEvans/ansible-proxmox/issues/89)) ([b65c99f](https://github.com/JacobPEvans/ansible-proxmox/commit/b65c99f267968619374bd9ee9c9b2071277fc26b))
+
 ## [1.2.1](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.2.0...v1.2.1) (2026-03-26)
 
 
