@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.2.3...v1.2.4) (2026-04-04)
+
+
+### Bug Fixes
+
+* eliminate SSH key temp file — use ssh-agent or key path ([#91](https://github.com/JacobPEvans/ansible-proxmox/issues/91)) ([1f740b9](https://github.com/JacobPEvans/ansible-proxmox/commit/1f740b973fad919a1a62e468fdf00a674abb3160))
+
 ## [1.2.3](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.2.2...v1.2.3) (2026-04-04)
 
 
