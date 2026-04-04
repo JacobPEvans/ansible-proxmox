@@ -24,15 +24,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# If no key file exists at PROXMOX_SSH_KEY_PATH, load key content into ssh-agent
+# If key file exists at PROXMOX_SSH_KEY_PATH, export expanded path for inventory.
+# Otherwise load key content into ssh-agent and unset PROXMOX_SSH_KEY_PATH so
+# inventory/hosts.yml omits ansible_ssh_private_key_file (Ansible uses the agent).
 if [[ -n "${PROXMOX_SSH_KEY_PATH:-}" ]] && [[ -f "${PROXMOX_SSH_KEY_PATH/#\~/$HOME}" ]]; then
-    export ANSIBLE_PRIVATE_KEY_FILE="${PROXMOX_SSH_KEY_PATH/#\~/$HOME}"
+    export PROXMOX_SSH_KEY_PATH="${PROXMOX_SSH_KEY_PATH/#\~/$HOME}"
 elif [[ -n "${PROXMOX_SSH_PRIVATE_KEY:-}" ]]; then
     eval "$(ssh-agent -s)" >/dev/null
     AGENT_STARTED=true
-    echo "$PROXMOX_SSH_PRIVATE_KEY" | ssh-add - 2>/dev/null
-    # Ansible uses the agent automatically when no key file is specified
-    unset ANSIBLE_PRIVATE_KEY_FILE
+    if ! printf '%s\n' "$PROXMOX_SSH_PRIVATE_KEY" | ssh-add -; then
+        echo "ERROR: Failed to load PROXMOX_SSH_PRIVATE_KEY into ssh-agent." >&2
+        echo "Ensure the key is valid and not passphrase-protected." >&2
+        exit 1
+    fi
+    unset PROXMOX_SSH_PRIVATE_KEY
+    unset PROXMOX_SSH_KEY_PATH
 else
     echo "ERROR: No SSH key available."
     echo "Set PROXMOX_SSH_KEY_PATH (file path) or PROXMOX_SSH_PRIVATE_KEY (key content) via Doppler."
