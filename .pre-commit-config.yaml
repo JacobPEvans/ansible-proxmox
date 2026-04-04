@@ -25,7 +25,7 @@ repos:
         pass_filenames: false
         always_run: true
         additional_dependencies:
-          - ansible-lint==26.3.0
+          - ansible-lint==26.4.0
           - ansible-core>=2.20.3,<2.21.0
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
