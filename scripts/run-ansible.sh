@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Ansible runner - extracts SSH key from environment, runs playbook
-# Prefers NIX_SHELL env var if set, otherwise uses ansible-playbook from PATH
-# (direnv automatically provides tools via .envrc nix shell)
+# Ansible runner - loads SSH key into ssh-agent (in-memory only), runs playbook.
+# The key NEVER touches disk. Prefers PROXMOX_SSH_KEY_PATH (file path) when
+# available; falls back to loading PROXMOX_SSH_PRIVATE_KEY into ssh-agent.
 set -euo pipefail
 
 usage() {
@@ -15,18 +15,29 @@ usage() {
 PLAYBOOK="$1"
 shift
 
-# Create temp file for SSH key with secure permissions
-SSH_KEY_FILE=$(mktemp)
-chmod 600 "$SSH_KEY_FILE"
+AGENT_STARTED=false
 
 cleanup() {
-    rm -f "$SSH_KEY_FILE"
+    if [[ "$AGENT_STARTED" == true ]]; then
+        ssh-agent -k >/dev/null 2>&1 || true
+    fi
 }
 trap cleanup EXIT
 
-# Write SSH key from environment to temp file
-echo "$PROXMOX_SSH_PRIVATE_KEY" > "$SSH_KEY_FILE"
-export ANSIBLE_PRIVATE_KEY_FILE="$SSH_KEY_FILE"
+# If no key file exists at PROXMOX_SSH_KEY_PATH, load key content into ssh-agent
+if [[ -n "${PROXMOX_SSH_KEY_PATH:-}" ]] && [[ -f "${PROXMOX_SSH_KEY_PATH/#\~/$HOME}" ]]; then
+    export ANSIBLE_PRIVATE_KEY_FILE="${PROXMOX_SSH_KEY_PATH/#\~/$HOME}"
+elif [[ -n "${PROXMOX_SSH_PRIVATE_KEY:-}" ]]; then
+    eval "$(ssh-agent -s)" >/dev/null
+    AGENT_STARTED=true
+    echo "$PROXMOX_SSH_PRIVATE_KEY" | ssh-add - 2>/dev/null
+    # Ansible uses the agent automatically when no key file is specified
+    unset ANSIBLE_PRIVATE_KEY_FILE
+else
+    echo "ERROR: No SSH key available."
+    echo "Set PROXMOX_SSH_KEY_PATH (file path) or PROXMOX_SSH_PRIVATE_KEY (key content) via Doppler."
+    exit 1
+fi
 
 # Run ansible-playbook - prefer NIX_SHELL if set, otherwise use PATH
 if [[ -n "${NIX_SHELL:-}" ]]; then
