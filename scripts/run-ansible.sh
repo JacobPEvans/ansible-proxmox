@@ -32,7 +32,7 @@ if [[ -n "${PROXMOX_SSH_KEY_PATH:-}" ]] && [[ -f "${PROXMOX_SSH_KEY_PATH/#\~/$HO
 elif [[ -n "${PROXMOX_SSH_PRIVATE_KEY:-}" ]]; then
     eval "$(ssh-agent -s)" >/dev/null
     AGENT_STARTED=true
-    if ! printf '%s\n' "$PROXMOX_SSH_PRIVATE_KEY" | ssh-add -; then
+    if ! printf '%s\n' "$PROXMOX_SSH_PRIVATE_KEY" | ssh-add - >/dev/null; then
         echo "ERROR: Failed to load PROXMOX_SSH_PRIVATE_KEY into ssh-agent." >&2
         echo "Ensure the key is valid and not passphrase-protected." >&2
         exit 1
