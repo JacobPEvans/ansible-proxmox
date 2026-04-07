@@ -1,0 +1,13 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_call:
+
+jobs:
+  copilot-setup-steps:
+    name: Copilot Setup Steps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install ansible tools
+        run: pip install ansible-core ansible-lint
