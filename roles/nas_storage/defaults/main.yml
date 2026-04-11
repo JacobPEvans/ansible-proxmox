@@ -11,6 +11,14 @@ nas_storage_smb_share_name: "nas"
 nas_storage_smb_workgroup: "WORKGROUP"
 nas_storage_smb_valid_users: "@nas"
 
+# Samba config validation command. Wrapped in `sh -c` because Ansible's
+# template `validate:` parameter runs via shlex.split (no shell), so a bare
+# `testparm -s %s 2>/dev/null` would treat `2>/dev/null` as a positional
+# hostname argument and fail with
+# "ERROR: You must specify both a machine name and an IP address."
+# The `%s` is double-quoted to handle Ansible temp paths containing spaces.
+nas_storage_smb_validate_cmd: 'sh -c "testparm -s \"%s\" 2>/dev/null"'
+
 # Subdirectories to create under mount point
 nas_storage_directories:
   - "huggingface/hub"
