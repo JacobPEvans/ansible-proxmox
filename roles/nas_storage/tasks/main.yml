@@ -137,7 +137,11 @@
     owner: root
     group: root
     mode: "0644"
-    validate: 'testparm -s %s 2>/dev/null'
+    # Wrap in `sh -c` because Ansible's validate runs via shlex.split (no shell),
+    # so a bare `testparm -s %s 2>/dev/null` would treat `2>/dev/null` as a
+    # positional hostname argument and fail with
+    # "ERROR: You must specify both a machine name and an IP address."
+    validate: 'sh -c "testparm -s %s 2>/dev/null"'
   notify: Restart smbd
   tags:
     - nas_storage
@@ -150,7 +154,11 @@
     owner: root
     group: root
     mode: "0644"
-    validate: 'testparm -s %s 2>/dev/null'
+    # Wrap in `sh -c` because Ansible's validate runs via shlex.split (no shell),
+    # so a bare `testparm -s %s 2>/dev/null` would treat `2>/dev/null` as a
+    # positional hostname argument and fail with
+    # "ERROR: You must specify both a machine name and an IP address."
+    validate: 'sh -c "testparm -s %s 2>/dev/null"'
   notify: Restart smbd
   tags:
     - nas_storage
