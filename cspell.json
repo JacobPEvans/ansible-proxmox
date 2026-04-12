@@ -6,6 +6,7 @@
     "https://raw.githubusercontent.com/JacobPEvans/.github/main/cspell/base.json"
   ],
   "words": [
+    "agentics",
     "blkid",
     "browsable",
     "clocksource",
@@ -21,6 +22,7 @@
     "endfor",
     "fqcn",
     "fuser",
+    "githubnext",
     "getconf",
     "hardlockup",
     "healthchecks",
@@ -76,5 +78,5 @@
     "writeback",
     "zvol"
   ],
-  "ignorePaths": [".git", "node_modules", "*.lock"]
+  "ignorePaths": [".git", "node_modules", "*.lock", ".github/workflows/*.lock.yml", ".github/workflows/agentics-maintenance.yml", ".github/aw/"]
 }
