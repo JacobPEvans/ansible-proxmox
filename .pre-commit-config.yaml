@@ -30,7 +30,7 @@ repos:
           - packaging
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v9.8.0
+    rev: v10.0.0
     hooks:
       - id: cspell
         name: Check spelling
