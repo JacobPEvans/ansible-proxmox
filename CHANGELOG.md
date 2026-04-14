@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.4.1...v1.4.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* add automation bots to AI Moderator skip-bots ([#125](https://github.com/JacobPEvans/ansible-proxmox/issues/125)) ([72b8eb8](https://github.com/JacobPEvans/ansible-proxmox/commit/72b8eb86028191c08c8e87fe0b3f9327ae1d3760))
+
 ## [1.4.1](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.4.0...v1.4.1) (2026-04-13)
 
 
