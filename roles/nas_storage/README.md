@@ -1,56 +1,48 @@
 # nas_storage
 
-Provisions a ZFS dataset and Samba share on the Proxmox host for centralized NAS storage.
+Provisions the Proxmox host NAS end to end from the Terraform `host_services.nas`
+contract: ZFS dataset, directory permissions, declarative Samba shares, and managed
+Samba users.
 
 ## What it does
 
-1. Creates a ZFS dataset at `rpool/data/nas` with a 1T quota, mounted at `/mnt/nas`
-2. Creates subdirectories for HuggingFace models, Ollama models, media, and backups
-3. Installs Samba and configures a share accessible to members of the `nas` group
+1. Creates or repairs the NAS ZFS dataset, mountpoint, and quota
+2. Creates `/mnt/nas`, managed subdirectories, and any declared share paths
+3. Installs Samba plus client/admin tooling
+4. Manages a Unix group plus declarative Samba-backed service accounts
+5. Renders one share config per declared share and validates config with `testparm`
+6. Stores a root-only password fingerprint so Samba password rotation is idempotent
 
-## Requirements
+## Inputs
 
-- Ansible 2.9+
-- Proxmox VE with ZFS (`rpool` pool must exist)
-- Root/sudo access
-
-## Installation
-
-This role is included in `playbooks/site.yml`. To apply only this role:
-
-```bash
-doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage
-```
+- `inventory/terraform_inventory.json` must exist and contain `host_services.nas`
+- `NAS_HOMEASSISTANT_SMB_PASSWORD` must be exported for the managed Home Assistant user
 
 ## Usage
 
-Run the full site playbook with the `nas_storage` tag:
-
 ```bash
-doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage --check
-doppler run -- ansible-playbook playbooks/site.yml --tags nas_storage
+sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage --check'
+sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage'
 ```
 
-After provisioning, add users to the `nas` group and set their Samba password:
+Validate the live NAS after deploy:
 
 ```bash
-usermod -aG nas <username>
-smbpasswd -a <username>
+sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/validate-nas.yml'
 ```
 
 ## Role Variables
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `nas_storage_zfs_dataset` | `rpool/data/nas` | ZFS dataset path |
-| `nas_storage_zfs_quota` | `1T` | ZFS quota |
-| `nas_storage_mount_point` | `/mnt/nas` | Mount point |
-| `nas_storage_smb_share_name` | `nas` | Samba share name |
-| `nas_storage_smb_workgroup` | `WORKGROUP` | Samba workgroup |
-| `nas_storage_smb_valid_users` | `@nas` | Samba valid users (group prefix `@`) |
-| `nas_storage_directories` | (see defaults) | Subdirectories to create under mount point |
+| `nas_storage_config` | Terraform host_services.nas | Source config injected by `inventory/load_terraform.yml` |
+| `nas_storage_group_name` | `nas` | Unix/Samba group for shared access |
+| `nas_storage_managed_users` | `[]` | Declarative Samba-backed service accounts |
+| `nas_storage_shares` | single `nas` share fallback | Declarative Samba shares |
+| `nas_storage_password_fingerprint_dir` | `/etc/samba/password-fingerprints` | Root-only password hash cache for idempotence |
 
 ## Notes
 
 - ZFS and systemd tasks are skipped in Docker containers (molecule testing)
-- The `nas` group is created automatically; add users to it manually as needed
+- Password values are read from environment variables populated by `sops exec-env`
+- `smbpasswd` is fully managed by Ansible; no post-run manual steps are required

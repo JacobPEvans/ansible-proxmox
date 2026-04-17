@@ -1,0 +1,65 @@
+---
+- name: Converge
+  hosts: all
+  become: false
+  gather_facts: true
+
+  vars:
+    nas_storage_from_terraform:
+      zfs_dataset: "rpool/data/nas"
+      zfs_quota: "1T"
+      mount_point: "/mnt/nas"
+      smb_share_name: "nas"
+      group_name: "nas"
+      directories:
+        - "huggingface/hub"
+        - "ollama/models"
+        - "media"
+        - "backups"
+      managed_users:
+        - name: "homeassistant"
+          unix_groups:
+            - "nas"
+          shell: "/usr/sbin/nologin"
+          create_home: false
+          password_secret_env: "NAS_HOMEASSISTANT_SMB_PASSWORD"
+      shares:
+        - name: "nas"
+          path: "/mnt/nas"
+          valid_users: "@nas"
+          browsable: true
+          read_only: false
+          force_group: "nas"
+          create_mask: "0664"
+          directory_mask: "0775"
+          comment: "Primary NAS root share"
+        - name: "ha-backups"
+          path: "/mnt/nas/backups"
+          valid_users: "homeassistant"
+          browsable: true
+          read_only: false
+          force_group: "nas"
+          create_mask: "0664"
+          directory_mask: "0775"
+          comment: "Home Assistant backup storage"
+        - name: "ha-media"
+          path: "/mnt/nas/media"
+          valid_users: "homeassistant"
+          browsable: true
+          read_only: false
+          force_group: "nas"
+          create_mask: "0664"
+          directory_mask: "0775"
+          comment: "Home Assistant media storage"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Include nas_storage role
+      ansible.builtin.include_role:
+        name: nas_storage
+      tags:
+        - nas_storage

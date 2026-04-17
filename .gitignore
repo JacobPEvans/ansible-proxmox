@@ -32,6 +32,7 @@ Thumbs.db
 *.vault
 vault.yml
 secrets.yml
+secrets.enc.yaml
 .vault_pass
 .vault_password
 SECRETS_SETUP.md
@@ -40,6 +41,7 @@ SECRETS_SETUP.md
 # Local inventory overrides
 inventory/local/
 inventory/*.local.yml
+inventory/terraform_inventory.json
 
 # Logs
 *.log

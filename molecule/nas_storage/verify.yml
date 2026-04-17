@@ -1,0 +1,81 @@
+---
+- name: Verify
+  hosts: all
+  become: false
+  gather_facts: true
+
+  tasks:
+    - name: Verify NAS root directory exists
+      ansible.builtin.stat:
+        path: /mnt/nas
+      register: nas_root
+      failed_when: not nas_root.stat.exists
+
+    - name: Assert NAS root ownership and mode
+      ansible.builtin.assert:
+        that:
+          - nas_root.stat.gr_name == "nas"
+          - nas_root.stat.mode == "0775"
+
+    - name: Verify NAS subdirectories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /mnt/nas/backups
+        - /mnt/nas/media
+      register: nas_dirs
+
+    - name: Assert NAS subdirectories exist
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Missing NAS subdirectory {{ item.item }}"
+      loop: "{{ nas_dirs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Verify Samba config files exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/samba/smb.conf
+        - /etc/samba/smb.conf.d/nas.conf
+        - /etc/samba/smb.conf.d/ha-backups.conf
+        - /etc/samba/smb.conf.d/ha-media.conf
+      register: samba_config_files
+
+    - name: Assert Samba config files exist
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Missing Samba config file {{ item.item }}"
+      loop: "{{ samba_config_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Validate effective Samba configuration
+      ansible.builtin.command:
+        cmd: testparm -s
+      changed_when: false
+
+    - name: Verify Home Assistant Samba user exists
+      ansible.builtin.command:
+        cmd: "pdbedit -L -u homeassistant"
+      changed_when: false
+
+    - name: Verify Samba password fingerprint exists
+      ansible.builtin.stat:
+        path: /etc/samba/password-fingerprints/homeassistant.sha256
+      register: samba_fingerprint
+      failed_when: not samba_fingerprint.stat.exists
+
+    - name: Read backup share config
+      ansible.builtin.slurp:
+        src: /etc/samba/smb.conf.d/ha-backups.conf
+      register: ha_backup_share
+
+    - name: Assert backup share config contains expected stanza
+      ansible.builtin.assert:
+        that:
+          - "'[ha-backups]' in (ha_backup_share.content | b64decode)"
+          - "'valid users = homeassistant' in (ha_backup_share.content | b64decode)"
