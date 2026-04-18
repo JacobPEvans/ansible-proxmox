@@ -28,15 +28,20 @@ molecule/**/driver.yml
 .DS_Store
 Thumbs.db
 
-# Secrets (never commit)
+# Secrets (never commit plaintext)
 *.vault
 vault.yml
 secrets.yml
-secrets.enc.yaml
 .vault_pass
 .vault_password
 SECRETS_SETUP.md
 .doppler.yaml
+
+# SOPS age private keys (never commit)
+*.age
+keys.txt
+
+# Note: SOPS-encrypted files (*.sops.yml) ARE safe to commit (values are ciphertext)
 
 # Local inventory overrides
 inventory/local/

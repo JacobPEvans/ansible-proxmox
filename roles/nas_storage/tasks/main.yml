@@ -202,7 +202,7 @@
     fail_msg: >-
       Environment variable {{ item.password_secret_env }} is required for
       managed Samba user {{ item.name }}.
-      Run the playbook with sops exec-env secrets.enc.yaml.
+      Run the playbook with sops exec-env secrets.sops.yml.
   loop: "{{ nas_storage_managed_users }}"
   loop_control:
     label: "{{ item.name }}"

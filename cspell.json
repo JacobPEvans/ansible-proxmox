@@ -82,7 +82,8 @@
     "vfat",
     "writeback",
     "zvol",
+    "ciphertext",
     "HOMEASSISTANT"
   ],
-  "ignorePaths": [".git", "node_modules", "*.lock", ".github/workflows/*.lock.yml", ".github/workflows/agentics-maintenance.yml", ".github/aw/"]
+  "ignorePaths": [".git", "node_modules", "*.lock", ".github/workflows/*.lock.yml", ".github/workflows/agentics-maintenance.yml", ".github/aw/", ".sops.yaml"]
 }

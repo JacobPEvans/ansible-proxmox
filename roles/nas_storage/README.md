@@ -13,6 +13,11 @@ Samba users.
 5. Renders one share config per declared share and validates config with `testparm`
 6. Stores a root-only password fingerprint so Samba password rotation is idempotent
 
+## Installation
+
+This role is included in the `ansible-proxmox` repository and applied via `playbooks/site.yml`.
+No separate installation is required.
+
 ## Inputs
 
 - `inventory/terraform_inventory.json` must exist and contain `host_services.nas`
@@ -21,14 +26,14 @@ Samba users.
 ## Usage
 
 ```bash
-sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage --check'
-sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage'
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage --check'
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --tags nas_storage'
 ```
 
 Validate the live NAS after deploy:
 
 ```bash
-sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/validate-nas.yml'
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/validate-nas.yml'
 ```
 
 ## Role Variables

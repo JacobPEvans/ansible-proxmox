@@ -58,63 +58,42 @@ configuration:
 - **Kernel Tuning**: Better performance for NVMe drives and VMs
 - **System Limits**: Prevents "too many open files" errors under load
 
-## Quick Start
+## Installation
 
-### Prerequisites
+Requires [Ansible][ansible-install] (Mac, Linux, WSL), SSH access to Proxmox server(s), and Proxmox VE 8.x.
 
-- A computer with [Ansible][ansible-install] installed (Mac, Linux, WSL)
-- SSH access to your Proxmox server(s)
-- Proxmox VE 8.x (Debian 12 based)
+```bash
+git clone https://github.com/JacobPEvans/ansible-proxmox.git
+cd ansible-proxmox
+ansible-galaxy collection install -r requirements.yml
+cp inventory/hosts.yml.example inventory/hosts.yml
+# Edit inventory/hosts.yml with your server details
+```
 
-### Setup (5 minutes)
+Sync the Terraform inventory and create the SOPS secrets file:
 
-1. **Clone this repository**
+```bash
+aws-vault exec tf-proxmox -- doppler run -- \
+  terragrunt output -json ansible_inventory > inventory/terraform_inventory.json
+cp secrets.sops.yml.example secrets.sops.yml
+sops secrets.sops.yml
+```
 
-   ```bash
-   git clone https://github.com/JacobPEvans/ansible-proxmox.git
-   cd ansible-proxmox
-   ```
+Set `NAS_HOMEASSISTANT_SMB_PASSWORD` in the secrets file before saving.
 
-2. **Install dependencies**
+## Usage
 
-   ```bash
-   ansible-galaxy collection install -r requirements.yml
-   ```
+Test the configuration (doesn't change anything):
 
-3. **Configure your inventory**
+```bash
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --check --diff'
+```
 
-   ```bash
-   cp inventory/hosts.yml.example inventory/hosts.yml
-   # Edit inventory/hosts.yml with your server details
-   ```
+Apply the configuration:
 
-4. **Sync Terraform inventory**
-
-   ```bash
-   aws-vault exec tf-proxmox -- doppler run -- \
-     terragrunt output -json ansible_inventory > inventory/terraform_inventory.json
-   ```
-
-5. **Create the SOPS secrets file**
-
-   ```bash
-   cp secrets.enc.yaml.example secrets.enc.yaml
-   sops secrets.enc.yaml
-   ```
-
-   Set `NAS_HOMEASSISTANT_SMB_PASSWORD` in that file before saving.
-
-6. **Test the configuration** (doesn't change anything)
-
-   ```bash
-   sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --check --diff'
-   ```
-
-7. **Apply the configuration**
-
-   ```bash
-   sops exec-env secrets.enc.yaml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml'
-   ```
+```bash
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml'
+```
 
 ## Customization
 

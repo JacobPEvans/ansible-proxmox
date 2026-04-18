@@ -14,7 +14,7 @@
           - lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') | length > 0
         fail_msg: >-
           NAS_HOMEASSISTANT_SMB_PASSWORD must be exported before running
-          validate-nas.yml. Use sops exec-env secrets.enc.yaml.
+          validate-nas.yml. Use sops exec-env secrets.sops.yml.
       no_log: true
 
     - name: Create smbclient credentials file
