@@ -17,6 +17,18 @@
           validate-nas.yml. Use sops exec-env secrets.enc.yaml.
       no_log: true
 
+    - name: Create smbclient credentials file
+      ansible.builtin.copy:
+        dest: /tmp/.smb-validate-creds
+        content: |
+          username = homeassistant
+          password = {{ lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') }}
+          domain = WORKGROUP
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
     - name: Create local validation file
       ansible.builtin.copy:
         dest: /tmp/ha-nas-validation.txt
@@ -45,7 +57,7 @@
 
     - name: Verify ZFS quota
       ansible.builtin.command:
-        cmd: "zfs get -Hp -o value quota {{ nas_storage_from_terraform.zfs_dataset }}"
+        cmd: "zfs get -H -o value quota {{ nas_storage_from_terraform.zfs_dataset }}"
       register: nas_validate_quota
       changed_when: false
 
@@ -77,12 +89,9 @@
 
     - name: List Home Assistant shares
       ansible.builtin.command:
-        cmd: >-
-          smbclient -g -L localhost
-          -U homeassistant%{{ lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') }}
+        cmd: smbclient -g -L localhost -A /tmp/.smb-validate-creds
       changed_when: false
       register: nas_validate_share_list
-      no_log: true
 
     - name: Assert Home Assistant shares are visible
       ansible.builtin.assert:
@@ -94,22 +103,23 @@
     - name: Exercise authenticated backup share write path
       ansible.builtin.command:
         cmd: >-
-          smbclient //localhost/ha-backups
-          -U homeassistant%{{ lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') }}
+          smbclient //localhost/ha-backups -A /tmp/.smb-validate-creds
           -c "put /tmp/ha-nas-validation.txt ha-nas-validation.txt; ls ha-nas-validation.txt; del ha-nas-validation.txt"
       changed_when: false
-      no_log: true
 
     - name: Exercise authenticated media share write path
       ansible.builtin.command:
         cmd: >-
-          smbclient //localhost/ha-media
-          -U homeassistant%{{ lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') }}
+          smbclient //localhost/ha-media -A /tmp/.smb-validate-creds
           -c "put /tmp/ha-nas-validation.txt ha-nas-validation.txt; ls ha-nas-validation.txt; del ha-nas-validation.txt"
       changed_when: false
-      no_log: true
 
   post_tasks:
+    - name: Remove smbclient credentials file
+      ansible.builtin.file:
+        path: /tmp/.smb-validate-creds
+        state: absent
+
     - name: Remove local validation file
       ansible.builtin.file:
         path: /tmp/ha-nas-validation.txt

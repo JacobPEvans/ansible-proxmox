@@ -1,5 +1,5 @@
 {
-  "domain": "jacobpevans.com",
+  "domain": "example.com",
   "host_services": {
     "nas": {
       "zfs_dataset": "rpool/data/nas",

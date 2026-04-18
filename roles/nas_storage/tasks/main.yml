@@ -81,13 +81,23 @@
 # Input validation
 # ============================================================
 
-- name: Validate Samba share definitions
+- name: Require at least one Samba share
   ansible.builtin.assert:
     that:
       - nas_storage_shares | length > 0
+    fail_msg: "nas_storage_shares must contain at least one share definition"
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Validate Samba share definitions
+  ansible.builtin.assert:
+    that:
       - (nas_storage_shares | map(attribute='name') | list | unique | length) == (nas_storage_shares | length)
       - (nas_storage_shares | map(attribute='path') | list | unique | length) == (nas_storage_shares | length)
-      - item.valid_users | length > 0
+      - item.valid_users is defined and item.valid_users | length > 0
+      - item.path is defined
+      - "'..'' not in item.path"
       - item.path == nas_storage_mount_point or item.path.startswith(nas_storage_mount_point ~ "/")
     fail_msg: "Invalid Samba share definition: {{ item | to_nice_json }}"
   loop: "{{ nas_storage_shares }}"
@@ -101,6 +111,7 @@
   ansible.builtin.assert:
     that:
       - (nas_storage_managed_users | map(attribute='name') | list | unique | length) == (nas_storage_managed_users | length)
+      - item.password_secret_env is defined
       - item.password_secret_env | length > 0
     fail_msg: "Invalid managed Samba user definition: {{ item | to_nice_json }}"
   loop: "{{ nas_storage_managed_users }}"

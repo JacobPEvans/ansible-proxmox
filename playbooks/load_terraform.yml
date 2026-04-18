@@ -21,11 +21,12 @@
     - name: Fail if terraform inventory is missing
       ansible.builtin.fail:
         msg: |
-          terraform_inventory.json not found!
+          Terraform inventory not found at: {{ terraform_inventory_path }}
 
           Generate it by running from terraform-proxmox:
-            terragrunt output -json ansible_inventory > \
-              ~/git/ansible-proxmox/main/inventory/terraform_inventory.json
+            terragrunt output -json ansible_inventory > {{ terraform_inventory_path }}
+
+          Or set TERRAFORM_INVENTORY_PATH to the correct location.
 
           Or apply terraform-proxmox from a cloned worktree so the after-hook
           syncs inventory into ansible-proxmox automatically.
