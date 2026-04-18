@@ -1,0 +1,62 @@
+---
+- name: Load Terraform Host Services
+  hosts: localhost
+  become: false
+  gather_facts: false
+  tags: always
+
+  vars:
+    terraform_inventory_path: >-
+      {{
+        lookup('env', 'TERRAFORM_INVENTORY_PATH')
+        | default(playbook_dir ~ '/../inventory/terraform_inventory.json', true)
+      }}
+
+  tasks:
+    - name: Verify terraform inventory exists
+      ansible.builtin.stat:
+        path: "{{ terraform_inventory_path }}"
+      register: terraform_inventory_check
+
+    - name: Fail if terraform inventory is missing
+      ansible.builtin.fail:
+        msg: |
+          Terraform inventory not found at: {{ terraform_inventory_path }}
+
+          Generate it by running from terraform-proxmox:
+            terragrunt output -json ansible_inventory > {{ terraform_inventory_path }}
+
+          Or set TERRAFORM_INVENTORY_PATH to the correct location.
+
+          Or apply terraform-proxmox from a cloned worktree so the after-hook
+          syncs inventory into ansible-proxmox automatically.
+      when: not terraform_inventory_check.stat.exists
+
+    - name: Load terraform inventory JSON
+      ansible.builtin.include_vars:
+        file: "{{ terraform_inventory_path }}"
+        name: terraform_data
+
+    - name: Validate NAS host_services structure
+      ansible.builtin.assert:
+        that:
+          - terraform_data is defined
+          - terraform_data.host_services is defined
+          - terraform_data.host_services.nas is defined
+          - terraform_data.host_services.nas.zfs_dataset is defined
+          - terraform_data.host_services.nas.mount_point is defined
+          - terraform_data.host_services.nas.directories is defined
+        fail_msg: |
+          terraform_data.host_services.nas is missing or incomplete in
+          terraform_inventory.json.
+
+          Expected terraform-proxmox ansible_inventory output to include the
+          NAS contract under host_services.nas.
+
+          Re-run terraform-proxmox apply or export ansible_inventory again.
+
+    - name: Inject Terraform NAS config onto proxmox hosts
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        nas_storage_from_terraform: "{{ terraform_data.host_services.nas }}"
+      loop: "{{ groups['proxmox'] | default([]) }}"

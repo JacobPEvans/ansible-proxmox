@@ -1,15 +1,28 @@
 ---
 # NAS Storage role defaults
 
+# Terraform-sourced NAS config injected by inventory/load_terraform.yml.
+nas_storage_config: >-
+  {{
+    nas_storage_from_terraform
+    | default(hostvars[inventory_hostname].nas_storage_from_terraform | default({}), true)
+  }}
+
 # ZFS dataset configuration
-nas_storage_zfs_dataset: "rpool/data/nas"
-nas_storage_zfs_quota: "1T"
-nas_storage_mount_point: "/mnt/nas"
+nas_storage_zfs_dataset: "{{ nas_storage_config.zfs_dataset | default('rpool/data/nas') }}"
+nas_storage_zfs_quota: "{{ nas_storage_config.zfs_quota | default('1T') }}"
+nas_storage_mount_point: "{{ nas_storage_config.mount_point | default('/mnt/nas') }}"
+nas_storage_group_name: "{{ nas_storage_config.group_name | default('nas') }}"
 
 # Samba configuration
-nas_storage_smb_share_name: "nas"
+nas_storage_smb_share_name: "{{ nas_storage_config.smb_share_name | default('nas') }}"
 nas_storage_smb_workgroup: "WORKGROUP"
-nas_storage_smb_valid_users: "@nas"
+nas_storage_smb_valid_users: "{{ nas_storage_config.smb_valid_users | default('@' ~ nas_storage_group_name) }}"
+nas_storage_packages:
+  - samba
+  - samba-common-bin
+  - smbclient
+nas_storage_password_fingerprint_dir: "/etc/samba/password-fingerprints"
 
 # Samba config validation command. Wrapped in `sh -c` because Ansible's
 # template `validate:` parameter runs via shlex.split (no shell), so a bare
@@ -20,8 +33,28 @@ nas_storage_smb_valid_users: "@nas"
 nas_storage_smb_validate_cmd: 'sh -c "testparm -s \"%s\" 2>/dev/null"'
 
 # Subdirectories to create under mount point
-nas_storage_directories:
-  - "huggingface/hub"
-  - "ollama/models"
-  - "media"
-  - "backups"
+nas_storage_directories: "{{ nas_storage_config.directories | default(['huggingface/hub', 'ollama/models', 'media', 'backups']) }}"
+
+# Declarative Samba account management.
+nas_storage_managed_users: "{{ nas_storage_config.managed_users | default([]) }}"
+
+# Backward-compatible single-share fallback when Terraform does not provide shares.
+nas_storage_shares: >-
+  {{
+    nas_storage_config.shares
+    | default(
+        [
+          {
+            'name': nas_storage_smb_share_name,
+            'path': nas_storage_mount_point,
+            'valid_users': nas_storage_smb_valid_users,
+            'browsable': true,
+            'read_only': false,
+            'force_group': nas_storage_group_name,
+            'create_mask': '0664',
+            'directory_mask': '0775',
+            'comment': 'Primary NAS root share'
+          }
+        ]
+      )
+  }}

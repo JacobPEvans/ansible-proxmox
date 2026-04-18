@@ -78,46 +78,288 @@
     - nas_storage_zfs
 
 # ============================================================
-# Samba group (must exist before directory creation)
+# Input validation
 # ============================================================
 
-- name: Create nas group
-  ansible.builtin.group:
-    name: nas
-    state: present
+- name: Require at least one Samba share
+  ansible.builtin.assert:
+    that:
+      - nas_storage_shares | length > 0
+    fail_msg: "nas_storage_shares must contain at least one share definition"
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Validate Samba share definitions
+  ansible.builtin.assert:
+    that:
+      - (nas_storage_shares | map(attribute='name') | list | unique | length) == (nas_storage_shares | length)
+      - (nas_storage_shares | map(attribute='path') | list | unique | length) == (nas_storage_shares | length)
+      - item.valid_users is defined and item.valid_users | length > 0
+      - item.path is defined
+      - "'..'' not in item.path"
+      - item.path == nas_storage_mount_point or item.path.startswith(nas_storage_mount_point ~ "/")
+    fail_msg: "Invalid Samba share definition: {{ item | to_nice_json }}"
+  loop: "{{ nas_storage_shares }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Validate managed Samba users
+  ansible.builtin.assert:
+    that:
+      - (nas_storage_managed_users | map(attribute='name') | list | unique | length) == (nas_storage_managed_users | length)
+      - item.password_secret_env is defined
+      - item.password_secret_env | length > 0
+    fail_msg: "Invalid managed Samba user definition: {{ item | to_nice_json }}"
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
   tags:
     - nas_storage
     - nas_storage_samba
 
 # ============================================================
-# Subdirectories
+# Group and directories
 # ============================================================
+
+- name: Create NAS group
+  ansible.builtin.group:
+    name: "{{ nas_storage_group_name }}"
+    state: present
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Create NAS root directory
+  ansible.builtin.file:
+    path: "{{ nas_storage_mount_point }}"
+    state: directory
+    owner: root
+    group: "{{ nas_storage_group_name }}"
+    mode: "0775"
+  tags:
+    - nas_storage
 
 - name: Create NAS subdirectories
   ansible.builtin.file:
     path: "{{ nas_storage_mount_point }}/{{ item }}"
     state: directory
     owner: root
-    group: nas
+    group: "{{ nas_storage_group_name }}"
     mode: "0775"
   loop: "{{ nas_storage_directories }}"
-  when: ansible_virtualization_type != 'docker'
+  loop_control:
+    label: "{{ nas_storage_mount_point }}/{{ item }}"
+  tags:
+    - nas_storage
+
+- name: Create share directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ item.force_group | default(nas_storage_group_name) }}"
+    mode: "{{ item.directory_mask | default('0775') }}"
+  loop: "{{ nas_storage_shares }}"
+  loop_control:
+    label: "{{ item.path }}"
   tags:
     - nas_storage
 
 # ============================================================
-# Samba installation and configuration
+# Samba installation and account management
 # ============================================================
 
-- name: Install Samba
+- name: Install Samba packages
   ansible.builtin.apt:
-    name: samba
+    name: "{{ nas_storage_packages }}"
     state: present
     update_cache: true
     cache_valid_time: 3600
   tags:
     - nas_storage
     - nas_storage_samba
+
+- name: Ensure Samba password fingerprint directory exists
+  ansible.builtin.file:
+    path: "{{ nas_storage_password_fingerprint_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Verify Samba password secrets are available
+  ansible.builtin.assert:
+    that:
+      - lookup('env', item.password_secret_env) | length > 0
+    fail_msg: >-
+      Environment variable {{ item.password_secret_env }} is required for
+      managed Samba user {{ item.name }}.
+      Run the playbook with sops exec-env secrets.sops.yml.
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Create managed NAS users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: present
+    group: "{{ nas_storage_group_name }}"
+    groups: "{{ item.unix_groups | default([nas_storage_group_name]) }}"
+    append: true
+    shell: "{{ item.shell | default('/usr/sbin/nologin') }}"
+    create_home: "{{ item.create_home | default(false) }}"
+    password_lock: true
+    system: true
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Build desired Samba password hash map
+  ansible.builtin.set_fact:
+    nas_storage_password_hashes: >-
+      {{
+        (nas_storage_password_hashes | default({}))
+        | combine({item.name: (lookup('env', item.password_secret_env) | hash('sha256'))})
+      }}
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Check existing Samba users
+  ansible.builtin.command:
+    cmd: "pdbedit -L -u {{ item.name }}"
+  register: nas_storage_samba_user_checks
+  changed_when: false
+  failed_when: false
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Check stored password fingerprints
+  ansible.builtin.stat:
+    path: "{{ nas_storage_password_fingerprint_dir }}/{{ item.name }}.sha256"
+  register: nas_storage_password_fingerprint_stats
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: nas_storage_managed_users | length > 0
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Load stored password fingerprints
+  ansible.builtin.slurp:
+    src: "{{ nas_storage_password_fingerprint_dir }}/{{ item.name }}.sha256"
+  register: nas_storage_password_fingerprint_contents
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: nas_storage_user_index
+  when:
+    - nas_storage_managed_users | length > 0
+    - nas_storage_password_fingerprint_stats.results[nas_storage_user_index].stat.exists
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Add Samba users to passdb
+  ansible.builtin.command:
+    cmd: "smbpasswd -s -a {{ item.name }}"
+    stdin: "{{ lookup('env', item.password_secret_env) }}\n{{ lookup('env', item.password_secret_env) }}"
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: nas_storage_user_index
+  when:
+    - nas_storage_managed_users | length > 0
+    - nas_storage_samba_user_checks.results[nas_storage_user_index].rc != 0
+  changed_when: true
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Rotate Samba passwords when fingerprints drift
+  ansible.builtin.command:
+    cmd: "smbpasswd -s {{ item.name }}"
+    stdin: "{{ lookup('env', item.password_secret_env) }}\n{{ lookup('env', item.password_secret_env) }}"
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: nas_storage_user_index
+  when:
+    - nas_storage_managed_users | length > 0
+    - nas_storage_samba_user_checks.results[nas_storage_user_index].rc == 0
+    - >-
+      not nas_storage_password_fingerprint_stats.results[nas_storage_user_index].stat.exists
+      or (
+        (nas_storage_password_fingerprint_contents.results[nas_storage_user_index].content
+          | default('') | b64decode | trim)
+        != nas_storage_password_hashes[item.name]
+      )
+  changed_when: true
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+- name: Persist Samba password fingerprints
+  ansible.builtin.copy:
+    dest: "{{ nas_storage_password_fingerprint_dir }}/{{ item.name }}.sha256"
+    content: "{{ nas_storage_password_hashes[item.name] }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ nas_storage_managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: nas_storage_user_index
+  when:
+    - nas_storage_managed_users | length > 0
+    - >-
+      nas_storage_samba_user_checks.results[nas_storage_user_index].rc != 0
+      or not nas_storage_password_fingerprint_stats.results[nas_storage_user_index].stat.exists
+      or (
+        (nas_storage_password_fingerprint_contents.results[nas_storage_user_index].content
+          | default('') | b64decode | trim)
+        != nas_storage_password_hashes[item.name]
+      )
+  no_log: true
+  tags:
+    - nas_storage
+    - nas_storage_samba
+
+# ============================================================
+# Samba configuration
+# ============================================================
 
 - name: Create Samba include directory
   ansible.builtin.file:
@@ -143,14 +385,17 @@
     - nas_storage
     - nas_storage_samba
 
-- name: Template nas share configuration
+- name: Template Samba share configurations
   ansible.builtin.template:
-    src: nas.conf.j2
-    dest: /etc/samba/smb.conf.d/nas.conf
+    src: share.conf.j2
+    dest: "/etc/samba/smb.conf.d/{{ item.name }}.conf"
     owner: root
     group: root
     mode: "0644"
     validate: "{{ nas_storage_smb_validate_cmd }}"
+  loop: "{{ nas_storage_shares }}"
+  loop_control:
+    label: "{{ item.name }}"
   notify: Restart smbd
   tags:
     - nas_storage

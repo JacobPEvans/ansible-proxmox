@@ -31,7 +31,7 @@ Run a single command, and every server gets the same professional
 configuration:
 
 ```bash
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+./scripts/run-ansible.sh playbooks/site.yml
 ```
 
 **Time saved**: 30-60 minutes per server
@@ -40,15 +40,16 @@ ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 
 ## What Gets Configured
 
-| Component               | What It Does                                       |
-| ----------------------- | -------------------------------------------------- |
-| **Common Packages**     | Installs utilities: htop, iotop, lm-sensors        |
-| **ZFS Swap**            | Creates optimized swap on ZFS                      |
-| **Kernel Tuning**       | Optimizes memory and disk settings                 |
-| **System Limits**       | Increases file and process limits                  |
-| **Crash Diagnostics**   | System crash diagnostics configuration             |
-| **LXC Features**        | LXC container feature flags (fuse, nesting)        |
-| **Proxmox Monitoring**  | Sets up historical monitoring (sysstat, atop)      |
+| Component              | What It Does                                        |
+| ---------------------- | --------------------------------------------------- |
+| **Common Packages**    | Installs utilities: htop, iotop, lm-sensors         |
+| **ZFS Swap**           | Creates optimized swap on ZFS                       |
+| **Kernel Tuning**      | Optimizes memory and disk settings                  |
+| **System Limits**      | Increases file and process limits                   |
+| **Crash Diagnostics**  | System crash diagnostics configuration              |
+| **LXC Features**       | LXC container feature flags (fuse, nesting)         |
+| **Proxmox Monitoring** | Sets up historical monitoring (sysstat, atop)       |
+| **NAS Storage**        | Declarative ZFS + Samba NAS for Home Assistant      |
 
 ### Why Each Matters
 
@@ -57,47 +58,42 @@ ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 - **Kernel Tuning**: Better performance for NVMe drives and VMs
 - **System Limits**: Prevents "too many open files" errors under load
 
-## Quick Start
+## Installation
 
-### Prerequisites
+Requires [Ansible][ansible-install] (Mac, Linux, WSL), SSH access to Proxmox server(s), and Proxmox VE 8.x.
 
-- A computer with [Ansible][ansible-install] installed (Mac, Linux, WSL)
-- SSH access to your Proxmox server(s)
-- Proxmox VE 8.x (Debian 12 based)
+```bash
+git clone https://github.com/JacobPEvans/ansible-proxmox.git
+cd ansible-proxmox
+ansible-galaxy collection install -r requirements.yml
+cp inventory/hosts.yml.example inventory/hosts.yml
+# Edit inventory/hosts.yml with your server details
+```
 
-### Setup (5 minutes)
+Sync the Terraform inventory and create the SOPS secrets file:
 
-1. **Clone this repository**
+```bash
+aws-vault exec tf-proxmox -- doppler run -- \
+  terragrunt output -json ansible_inventory > inventory/terraform_inventory.json
+cp secrets.sops.yml.example secrets.sops.yml
+sops secrets.sops.yml
+```
 
-   ```bash
-   git clone https://github.com/JacobPEvans/ansible-proxmox.git
-   cd ansible-proxmox
-   ```
+Set `NAS_HOMEASSISTANT_SMB_PASSWORD` in the secrets file before saving.
 
-2. **Install dependencies**
+## Usage
 
-   ```bash
-   ansible-galaxy collection install -r requirements.yml
-   ```
+Test the configuration (doesn't change anything):
 
-3. **Configure your inventory**
+```bash
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml --check --diff'
+```
 
-   ```bash
-   cp inventory/hosts.yml.example inventory/hosts.yml
-   # Edit inventory/hosts.yml with your server details
-   ```
+Apply the configuration:
 
-4. **Test the connection** (doesn't change anything)
-
-   ```bash
-   ansible-playbook -i inventory/hosts.yml playbooks/site.yml --check --diff
-   ```
-
-5. **Apply the configuration**
-
-   ```bash
-   ansible-playbook -i inventory/hosts.yml playbooks/site.yml
-   ```
+```bash
+sops exec-env secrets.sops.yml 'doppler run -- ./scripts/run-ansible.sh playbooks/site.yml'
+```
 
 ## Customization
 
@@ -132,11 +128,21 @@ Tools provided: `ansible`, `ansible-lint`, `molecule`, `sops`, `age`,
 
 ## Testing
 
-This project includes automated tests using [Molecule][molecule]:
+This project includes automated tests using [Molecule][molecule] plus a
+Terraform inventory loading check:
 
 ```bash
-# Run tests (molecule is provided by the Nix dev environment)
-molecule test
+# Run the default scenario
+ANSIBLE_ALLOW_BROKEN_CONDITIONALS=1 molecule test
+
+# Run the NAS-focused scenario
+ANSIBLE_ALLOW_BROKEN_CONDITIONALS=1 molecule test -s nas_storage
+
+# Verify Terraform inventory loading locally
+cp tests/inventory_load/terraform_inventory.json inventory/terraform_inventory.json
+TERRAFORM_INVENTORY_PATH=$PWD/inventory/terraform_inventory.json \
+PROXMOX_VE_HOSTNAME=localhost PROXMOX_VM_SSH_USERNAME=root \
+  ansible-playbook tests/inventory_load/verify_inventory.yml -i inventory/hosts.yml -c local
 ```
 
 ## For Developers

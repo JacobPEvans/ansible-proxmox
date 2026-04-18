@@ -1,0 +1,11 @@
+[{{ item.name }}]
+{% if item.comment is defined %}
+   comment = {{ item.comment }}
+{% endif %}
+   path = "{{ item.path }}"
+   valid users = {{ item.valid_users }}
+   read only = {{ (item.read_only | default(false)) | ternary('yes', 'no') }}
+   browsable = {{ (item.browsable | default(true)) | ternary('yes', 'no') }}
+   create mask = {{ item.create_mask | default('0664') }}
+   directory mask = {{ item.directory_mask | default('0775') }}
+   force group = {{ item.force_group | default(nas_storage_group_name) }}

@@ -7,6 +7,7 @@
   ],
   "words": [
     "agentics",
+    "creds",
     "blkid",
     "browsable",
     "clocksource",
@@ -26,6 +27,7 @@
     "getconf",
     "hardlockup",
     "healthchecks",
+    "homeassistant",
     "homelab",
     "hpet",
     "hugepages",
@@ -43,6 +45,7 @@
     "menuentry",
     "mountpoint",
     "netbios",
+    "nologin",
     "nmap",
     "nofile",
     "nosmt",
@@ -54,6 +57,8 @@
     "primarycache",
     "printk",
     "procps",
+    "pdbedit",
+    "passdb",
     "psmisc",
     "pstree",
     "rasdaemon",
@@ -76,7 +81,9 @@
     "unrecovered",
     "vfat",
     "writeback",
-    "zvol"
+    "zvol",
+    "ciphertext",
+    "HOMEASSISTANT"
   ],
-  "ignorePaths": [".git", "node_modules", "*.lock", ".github/workflows/*.lock.yml", ".github/workflows/agentics-maintenance.yml", ".github/aw/"]
+  "ignorePaths": [".git", "node_modules", "*.lock", ".github/workflows/*.lock.yml", ".github/workflows/agentics-maintenance.yml", ".github/aw/", ".sops.yaml"]
 }

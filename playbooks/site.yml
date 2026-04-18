@@ -3,6 +3,9 @@
 #
 # Usage: See README.md or CLAUDE.md for environment configuration
 
+- name: Load Terraform host services
+  import_playbook: load_terraform.yml
+
 - name: Configure Proxmox VE servers
   hosts: proxmox
   become: true

@@ -1,0 +1,126 @@
+---
+- name: Load Terraform host services
+  import_playbook: load_terraform.yml
+
+- name: Validate Proxmox NAS
+  hosts: proxmox
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Require Home Assistant Samba password for validation
+      ansible.builtin.assert:
+        that:
+          - lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') | length > 0
+        fail_msg: >-
+          NAS_HOMEASSISTANT_SMB_PASSWORD must be exported before running
+          validate-nas.yml. Use sops exec-env secrets.sops.yml.
+      no_log: true
+
+    - name: Create smbclient credentials file
+      ansible.builtin.copy:
+        dest: /tmp/.smb-validate-creds
+        content: |
+          username = homeassistant
+          password = {{ lookup('env', 'NAS_HOMEASSISTANT_SMB_PASSWORD') }}
+          domain = WORKGROUP
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Create local validation file
+      ansible.builtin.copy:
+        dest: /tmp/ha-nas-validation.txt
+        content: "home-assistant-samba-validation\n"
+        owner: root
+        group: root
+        mode: "0600"
+
+  tasks:
+    - name: Verify ZFS dataset exists
+      ansible.builtin.command:
+        cmd: "zfs list {{ nas_storage_from_terraform.zfs_dataset }}"
+      changed_when: false
+
+    - name: Verify ZFS mountpoint
+      ansible.builtin.command:
+        cmd: "zfs get -H -o value mountpoint {{ nas_storage_from_terraform.zfs_dataset }}"
+      register: nas_validate_mountpoint
+      changed_when: false
+
+    - name: Assert mountpoint matches Terraform
+      ansible.builtin.assert:
+        that:
+          - nas_validate_mountpoint.stdout == nas_storage_from_terraform.mount_point
+        fail_msg: "NAS mountpoint drift detected"
+
+    - name: Verify ZFS quota
+      ansible.builtin.command:
+        cmd: "zfs get -H -o value quota {{ nas_storage_from_terraform.zfs_dataset }}"
+      register: nas_validate_quota
+      changed_when: false
+
+    - name: Assert quota matches Terraform
+      ansible.builtin.assert:
+        that:
+          - nas_validate_quota.stdout == nas_storage_from_terraform.zfs_quota
+        fail_msg: "NAS quota drift detected"
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert smbd is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['smbd.service'] is defined
+          - ansible_facts.services['smbd.service'].state == 'running'
+        fail_msg: "smbd.service is not running"
+
+    - name: Validate effective Samba configuration
+      ansible.builtin.command:
+        cmd: testparm -s
+      changed_when: false
+
+    - name: Verify Home Assistant Samba user exists
+      ansible.builtin.command:
+        cmd: "pdbedit -L -u homeassistant"
+      changed_when: false
+
+    - name: List Home Assistant shares
+      ansible.builtin.command:
+        cmd: smbclient -g -L localhost -A /tmp/.smb-validate-creds
+      changed_when: false
+      register: nas_validate_share_list
+
+    - name: Assert Home Assistant shares are visible
+      ansible.builtin.assert:
+        that:
+          - "'Disk|ha-backups|' in nas_validate_share_list.stdout"
+          - "'Disk|ha-media|' in nas_validate_share_list.stdout"
+        fail_msg: "Expected Home Assistant shares are not exposed by Samba"
+
+    - name: Exercise authenticated backup share write path
+      ansible.builtin.command:
+        cmd: >-
+          smbclient //localhost/ha-backups -A /tmp/.smb-validate-creds
+          -c "put /tmp/ha-nas-validation.txt ha-nas-validation.txt; ls ha-nas-validation.txt; del ha-nas-validation.txt"
+      changed_when: false
+
+    - name: Exercise authenticated media share write path
+      ansible.builtin.command:
+        cmd: >-
+          smbclient //localhost/ha-media -A /tmp/.smb-validate-creds
+          -c "put /tmp/ha-nas-validation.txt ha-nas-validation.txt; ls ha-nas-validation.txt; del ha-nas-validation.txt"
+      changed_when: false
+
+  post_tasks:
+    - name: Remove smbclient credentials file
+      ansible.builtin.file:
+        path: /tmp/.smb-validate-creds
+        state: absent
+
+    - name: Remove local validation file
+      ansible.builtin.file:
+        path: /tmp/ha-nas-validation.txt
+        state: absent
