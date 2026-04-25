@@ -7,9 +7,9 @@ name: Retrigger PR Checks
 
 on:
   schedule:
-    - cron: "0 10 * * *"  # 6 AM EDT
-    - cron: "0 20 * * *"  # 4 PM EDT
-    - cron: "0 0 * * *"   # 8 PM EDT
+    - cron: "0 10 * * *"  # 10:00 UTC (6 AM EDT / 5 AM EST)
+    - cron: "0 20 * * *"  # 20:00 UTC (4 PM EDT / 3 PM EST)
+    - cron: "0 0 * * *"   # 00:00 UTC (8 PM EDT / 7 PM EST)
   workflow_dispatch:
 
 permissions:
