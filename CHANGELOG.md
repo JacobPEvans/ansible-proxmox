@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.5.2...v1.5.3) (2026-04-25)
+
+
+### Bug Fixes
+
+* **ci:** move pip pins to requirements-ci.txt for Renovate tracking ([#143](https://github.com/JacobPEvans/ansible-proxmox/issues/143)) ([e0463ca](https://github.com/JacobPEvans/ansible-proxmox/commit/e0463ca4dad8c839a73fc016a12fac48cb91febd))
+
 ## [1.5.2](https://github.com/JacobPEvans/ansible-proxmox/compare/v1.5.1...v1.5.2) (2026-04-24)
 
 
