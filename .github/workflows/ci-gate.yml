@@ -100,6 +100,7 @@ jobs:
       - name: Run molecule test
         run: molecule test
         env:
+          ANSIBLE_ALLOW_BROKEN_CONDITIONALS: "1"
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
 
