@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 imports:
-  - JacobPEvans/.github/.github/workflows/shared/repo-health-audit-config.md@main
+  - JacobPEvans/ai-workflows/.github/workflows/shared/repo-health-audit-config.md@feat/shared-health-audit
 
 permissions:
   contents: read
@@ -21,4 +21,4 @@ timeout-minutes: 15
 
 # Repo Health Audit
 
-{{#import JacobPEvans/.github/.github/workflows/shared/repo-health-audit-prompt.md@main}}
+{{#import JacobPEvans/ai-workflows/.github/workflows/shared/repo-health-audit-prompt.md@feat/shared-health-audit}}
