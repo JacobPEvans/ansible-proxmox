@@ -1,0 +1,370 @@
+{
+ "containers": {
+  "agent-exec": {
+   "node": "pve-r710",
+   "vmid": 515000
+  },
+  "agentgateway": {
+   "node": "pve-w1700",
+   "vmid": 516000
+  },
+  "ai-runner-01": {
+   "node": "pve-w1700",
+   "vmid": 515020
+  },
+  "ai-runner-pool-01": {
+   "node": "pve-w5900",
+   "vmid": 515030
+  },
+  "ansible": {
+   "node": "pve-w1700",
+   "vmid": 100
+  },
+  "apt-cacher-ng": {
+   "node": "pve-w1700",
+   "vmid": 106
+  },
+  "authelia": {
+   "node": "pve-w1700",
+   "vmid": 100050
+  },
+  "clickhouse": {
+   "node": "pve-r540",
+   "vmid": 406000
+  },
+  "cribl-edge-01": {
+   "node": "pve-w1700",
+   "vmid": 423000
+  },
+  "cribl-edge-02": {
+   "node": "pve-w1700",
+   "vmid": 423010
+  },
+  "cribl-stream-01": {
+   "node": "pve-w1700",
+   "vmid": 425000
+  },
+  "cribl-stream-02": {
+   "node": "pve-w1700",
+   "vmid": 425010
+  },
+  "dify": {
+   "node": "pve-w1700",
+   "vmid": 505010
+  },
+  "docling-serve": {
+   "node": "pve-r540",
+   "vmid": 505060
+  },
+  "download-vpn": {
+   "node": "pve-r540",
+   "vmid": 725140
+  },
+  "glance": {
+   "node": "pve-w1700",
+   "vmid": 605050
+  },
+  "grafana": {
+   "node": "pve-w1700",
+   "vmid": 410040
+  },
+  "haproxy": {
+   "node": "pve-w1700",
+   "vmid": 421000
+  },
+  "hermes-agent": {
+   "node": "pve-r710",
+   "vmid": 517000
+  },
+  "hermes-donna": {
+   "node": "pve-r710",
+   "vmid": 517010
+  },
+  "hermes-ui": {
+   "node": "pve-r710",
+   "vmid": 505050
+  },
+  "hindsight-1": {
+   "node": "pve-r710",
+   "vmid": 518000
+  },
+  "hindsight-2": {
+   "node": "pve-r540",
+   "vmid": 518010
+  },
+  "homarr": {
+   "node": "pve-w1700",
+   "vmid": 605030
+  },
+  "homeassistant": {
+   "node": "pve-w1700",
+   "vmid": 120
+  },
+  "homepage": {
+   "node": "pve-w1700",
+   "vmid": 605040
+  },
+  "idrac-kvm": {
+   "node": "pve-w1700",
+   "vmid": 251
+  },
+  "langflow": {
+   "node": "pve-w1700",
+   "vmid": 505020
+  },
+  "langfuse": {
+   "node": "pve-r540",
+   "vmid": 405000
+  },
+  "langgraph": {
+   "node": "pve-w1700",
+   "vmid": 505040
+  },
+  "llamaindex": {
+   "node": "pve-r540",
+   "vmid": 515010
+  },
+  "llm-4080": {
+   "node": "pve-w5900",
+   "vmid": 503020
+  },
+  "llm-fast": {
+   "node": "pve-w1700",
+   "vmid": 503000
+  },
+  "llm-light": {
+   "node": "pve-r710",
+   "vmid": 503010
+  },
+  "llm-redis-1": {
+   "node": "pve-w1700",
+   "vmid": 513000
+  },
+  "llm-router-1": {
+   "node": "pve-w1700",
+   "vmid": 512000
+  },
+  "llm-router-2": {
+   "node": "pve-r540",
+   "vmid": 512010
+  },
+  "llm-router-3": {
+   "node": "pve-r710",
+   "vmid": 512020
+  },
+  "mailpit": {
+   "node": "pve-w1700",
+   "vmid": 110
+  },
+  "mssql": {
+   "node": "pve-w1700",
+   "vmid": 130
+  },
+  "n8n": {
+   "node": "pve-w1700",
+   "vmid": 505030
+  },
+  "nautobot": {
+   "node": "pve-w1700",
+   "vmid": 605000
+  },
+  "nginx-proxy-manager": {
+   "node": "pve-w1700",
+   "vmid": 170
+  },
+  "ntfy": {
+   "node": "pve-w1700",
+   "vmid": 111
+  },
+  "open-webui": {
+   "node": "pve-w1700",
+   "vmid": 505000
+  },
+  "openbao-01": {
+   "node": "pve-w1700",
+   "vmid": 110040
+  },
+  "openbao-02": {
+   "node": "pve-r540",
+   "vmid": 110140
+  },
+  "openbao-10": {
+   "node": "pve-w1700",
+   "vmid": 110010
+  },
+  "openbao-20": {
+   "node": "pve-r540",
+   "vmid": 110020
+  },
+  "openbao-21": {
+   "node": "pve-r540",
+   "vmid": 110021
+  },
+  "openbao-30": {
+   "node": "pve-r710",
+   "vmid": 110030
+  },
+  "openbao-31": {
+   "node": "pve-r710",
+   "vmid": 110031
+  },
+  "openbao-41": {
+   "node": "pve-w5900",
+   "vmid": 110041
+  },
+  "openbao-42": {
+   "node": "pve-w5900",
+   "vmid": 110042
+  },
+  "openproject": {
+   "node": "pve-w1700",
+   "vmid": 140
+  },
+  "phoenix": {
+   "node": "pve-r540",
+   "vmid": 407000
+  },
+  "plex": {
+   "node": "pve-r540",
+   "vmid": 703040
+  },
+  "postgres": {
+   "node": "pve-w1700",
+   "vmid": 303000
+  },
+  "postgres-ai-1": {
+   "node": "pve-r710",
+   "vmid": 519000
+  },
+  "postgres-ai-2": {
+   "node": "pve-r540",
+   "vmid": 519010
+  },
+  "postgres-apps": {
+   "node": "pve-r540",
+   "vmid": 602000
+  },
+  "prometheus": {
+   "node": "pve-w1700",
+   "vmid": 195
+  },
+  "pve-scripts-local": {
+   "node": "pve-w1700",
+   "vmid": 102
+  },
+  "qdrant": {
+   "node": "pve-r540",
+   "vmid": 514000
+  },
+  "radarr": {
+   "node": "pve-r540",
+   "vmid": 715340
+  },
+  "s3": {
+   "node": "pve-r540",
+   "vmid": 202000
+  },
+  "seerr": {
+   "node": "pve-r540",
+   "vmid": 736030
+  },
+  "sonarr": {
+   "node": "pve-r540",
+   "vmid": 715240
+  },
+  "sortarr": {
+   "node": "pve-r540",
+   "vmid": 736040
+  },
+  "splunk-mgmt": {
+   "node": "pve-w1700",
+   "vmid": 199
+  },
+  "squid": {
+   "node": "pve-w5900",
+   "vmid": 515040
+  },
+  "status": {
+   "node": "pve-w1700",
+   "vmid": 605060
+  },
+  "technitium-30": {
+   "node": "pve-r710",
+   "vmid": 5310030
+  },
+  "technitium-dns-2": {
+   "node": "pve-r540",
+   "vmid": 5310010
+  },
+  "traefik-10": {
+   "node": "pve-w1700",
+   "vmid": 100010
+  },
+  "traefik-30": {
+   "node": "pve-r710",
+   "vmid": 100030
+  },
+  "unifi-metrics": {
+   "node": "pve-w1700",
+   "vmid": 415040
+  },
+  "vikunja": {
+   "node": "pve-w1700",
+   "vmid": 605010
+  },
+  "zammad": {
+   "node": "pve-r710",
+   "vmid": 605020
+  }
+ },
+ "docker_vms": {
+  "docker-host": {
+   "node": "pve-w5900",
+   "vmid": 250
+  },
+  "docker-host-540": {
+   "node": "pve-r540",
+   "vmid": 915100
+  },
+  "iac-platform": {
+   "node": "pve-r710",
+   "vmid": 110130
+  }
+ },
+ "splunk_vm": {
+  "splunk": {
+   "node": "pve-w1700",
+   "vmid": 200
+  }
+ },
+ "vms": {
+  "docker-host": {
+   "node": "pve-w5900",
+   "vmid": 250
+  },
+  "docker-host-540": {
+   "node": "pve-r540",
+   "vmid": 915100
+  },
+  "iac-platform": {
+   "node": "pve-r710",
+   "vmid": 110130
+  },
+  "pbs": {
+   "node": "pve-r710",
+   "vmid": 240
+  },
+  "win10-vdi": {
+   "node": "pve-r540",
+   "vmid": 995110
+  },
+  "win11-vdi": {
+   "node": "pve-r540",
+   "vmid": 995111
+  },
+  "win25-vdi": {
+   "node": "pve-r540",
+   "vmid": 995112
+  }
+ }
+}

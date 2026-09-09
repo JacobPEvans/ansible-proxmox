@@ -1,0 +1,110 @@
+---
+# The placement comparison must find real drift and stay quiet otherwise.
+#
+# The fixtures are the estate's own inventory shape and a hand-built map of
+# where guests actually run, including the three that had genuinely drifted
+# when this check was written. If the comparison stops finding those three, it
+# has stopped working.
+- name: Verify the guest-placement comparison
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    guest_placement_exceptions: {}
+
+  tasks:
+    - name: Load the inventory-shaped fixture
+      ansible.builtin.set_fact:
+        tofu_data: "{{ lookup('ansible.builtin.file', playbook_dir + '/tofu_fixture.json') | from_json }}"
+
+    - name: Build the actual-placement map, matching reality at the time
+      ansible.builtin.set_fact:
+        placement_actual: >-
+          {%- set m = {} -%}
+          {%- for sect in ['containers', 'vms', 'docker_vms', 'splunk_vm'] -%}
+          {%-   for name, cfg in (tofu_data[sect] | default({})).items() -%}
+          {%-     set _ = m.update({(cfg.vmid | string): cfg.node}) -%}
+          {%-   endfor -%}
+          {%- endfor -%}
+          {#- now inject the three real mismatches measured on 2026-09-09 -#}
+          {%- set _ = m.update({
+                (tofu_data.containers['openbao-20'].vmid | string): 'pve-r710',
+                (tofu_data.containers['openbao-21'].vmid | string): 'pve-w1700'}) -%}
+          {{ m }}
+
+    - name: Run the comparison exactly as the playbook does
+      ansible.builtin.set_fact:
+        placement_report: >-
+          {%- set declared = (tofu_data.containers | default({}))
+                             | combine(tofu_data.vms | default({}))
+                             | combine(tofu_data.docker_vms | default({}))
+                             | combine(tofu_data.splunk_vm | default({})) -%}
+          {%- set drift = [] -%}
+          {%- set unknown = [] -%}
+          {%- set checked = [] -%}
+          {%- for name, cfg in declared.items() -%}
+          {%-   set vmid = (cfg.vmid | default('')) | string -%}
+          {%-   set want = cfg.node | default('') -%}
+          {%-   if vmid and want -%}
+          {%-     if vmid in placement_actual -%}
+          {%-       set _ = checked.append(name) -%}
+          {%-       set got = placement_actual[vmid] -%}
+          {%-       if got != want
+                       and guest_placement_exceptions.get(name, '') != got -%}
+          {%-         set _ = drift.append(name ~ ' (id ' ~ vmid ~ '): recorded '
+                                           ~ want ~ ', running on ' ~ got) -%}
+          {%-       endif -%}
+          {%-     else -%}
+          {%-       set _ = unknown.append(name ~ ' (id ' ~ vmid ~ ')') -%}
+          {%-     endif -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {{ {'drift': drift, 'not_running': unknown, 'checked': checked | length} }}
+
+    - name: It finds exactly the two container mismatches that were real
+      vars:
+        names: "{{ placement_report.drift | map('regex_replace', ' .*$', '') | sort | list }}"
+      ansible.builtin.assert:
+        that:
+          - names == ['openbao-20', 'openbao-21']
+        fail_msg: >-
+          Expected the two known-drifted store members, found {{ names }}.
+          Either the comparison has stopped detecting drift, or it has started
+          reporting guests that are correctly placed.
+
+    # Derived, not a magic number: the sections overlap (a docker VM appears
+    # under both `vms` and `docker_vms`), so combining them dedupes by name and
+    # the total is smaller than the sum of the sections. Hardcoding the sum
+    # would fail for a reason that has nothing to do with placement.
+    - name: It compared the whole declared set, not a subset
+      vars:
+        _unique_declared: >-
+          {{ ((tofu_data.containers | default({}))
+              | combine(tofu_data.vms | default({}))
+              | combine(tofu_data.docker_vms | default({}))
+              | combine(tofu_data.splunk_vm | default({}))) | length }}
+      ansible.builtin.assert:
+        that:
+          - placement_report.checked | int == _unique_declared | int
+        fail_msg: >-
+          Compared {{ placement_report.checked }} of {{ _unique_declared }}
+          declared guests. A comparison that quietly examines a subset reports
+          success for everything it skipped.
+
+    - name: An empty actual-map must never read as "no drift"
+      vars:
+        empty_report: >-
+          {%- set drift = [] -%}
+          {%- for name, cfg in (tofu_data.containers | default({})).items() -%}
+          {%-   if (cfg.vmid | string) in {} -%}
+          {%-     set _ = drift.append(name) -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {{ {'drift': drift} }}
+      ansible.builtin.assert:
+        that:
+          - (empty_report | from_yaml).drift | length == 0
+        success_msg: >-
+          Confirmed: with no actual data every guest is skipped and the drift
+          list is empty — which is why the playbook asserts the map is
+          non-empty before judging anything.
