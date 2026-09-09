@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0](https://github.com/dryvist/ansible-proxmox/compare/v2.5.0...v2.6.0) (2026-09-09)
+
+
+### Features
+
+* **local_identities:** add a backup ingress service account ([#727](https://github.com/dryvist/ansible-proxmox/issues/727)) ([f89cafe](https://github.com/dryvist/ansible-proxmox/commit/f89cafeb5cac60ccacf336e6036d552e492e8dbc))
+* **pve_ha,zfs_pools:** derive HA class, declare shutdown policy and pool import ([#742](https://github.com/dryvist/ansible-proxmox/issues/742)) ([bbd604b](https://github.com/dryvist/ansible-proxmox/commit/bbd604b5563410c538072acfb00caf25da8a859a))
+* **pve_health_telemetry:** emit accumulated hardware-error totals ([#748](https://github.com/dryvist/ansible-proxmox/issues/748)) ([45e305a](https://github.com/dryvist/ansible-proxmox/commit/45e305a578c363d0a5b6ea9016daa0ef4cff2f8e))
+
+
+### Bug Fixes
+
+* **ntp:** step the clock and persist it to the RTC ([#747](https://github.com/dryvist/ansible-proxmox/issues/747)) ([95bb969](https://github.com/dryvist/ansible-proxmox/commit/95bb9698e666f26253a3b0595d9bf008205074e3))
+
 ## [2.5.0](https://github.com/dryvist/ansible-proxmox/compare/v2.4.0...v2.5.0) (2026-09-06)
 
 
