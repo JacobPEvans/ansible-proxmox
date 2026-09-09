@@ -1,0 +1,135 @@
+---
+# Fail when a guest is not on the node the published inventory records.
+#
+# The container transport does not connect to a guest directly: it connects to
+# the guest's NODE, derived from the inventory, and acts on the guest there.
+# When the record names the wrong node, the transport reaches a perfectly
+# healthy node, asks it about a guest it does not have, and reports the guest
+# unreachable while it is up the whole time.
+#
+# Measured 2026-09-09: three guests had drifted, and two had been reported
+# unreachable on every converge for an unknown period while running and
+# accepting sessions throughout. Nothing detected it, because placement drift
+# is silent by construction — the guest is fine, the node is fine, and only the
+# pairing is wrong.
+#
+# Compared by VMID, never by name: some guests are named differently in the
+# inventory and in the cluster, and a name-based comparison silently skips
+# those. A check that skips what it cannot match reports success for exactly
+# the guests it failed to examine.
+- name: Collect actual guest placement from each node
+  hosts: proxmox
+  gather_facts: false
+  become: true
+  tags:
+    - placement
+    - verify
+
+  tasks:
+    - name: List the guest IDs this node actually runs
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          { pct list 2>/dev/null | awk 'NR>1 {print $1}';
+            qm  list 2>/dev/null | awk 'NR>1 {print $1}'; } | sort -u
+        executable: /bin/bash
+      register: placement_local
+      changed_when: false
+      check_mode: false
+
+    - name: Record them against this node
+      ansible.builtin.set_fact:
+        placement_vmids: "{{ placement_local.stdout_lines | map('trim') | select | list }}"
+
+- name: Compare actual placement against the published inventory
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags:
+    - placement
+    - verify
+
+  vars:
+    # guest name -> node it is knowingly running on. Every entry needs a reason
+    # on the line. This is an opt-out for a known state, not a way to silence
+    # drift.
+    guest_placement_exceptions: {}
+
+  tasks:
+    - name: Build guest-id to actual-node from every node that answered
+      ansible.builtin.set_fact:
+        placement_actual: >-
+          {{ placement_actual | default({})
+             | combine(dict(hostvars[item].placement_vmids
+                            | zip([item] * (hostvars[item].placement_vmids | length)))) }}
+      loop: "{{ groups['proxmox'] | default([]) }}"
+      when: hostvars[item].placement_vmids is defined
+      loop_control:
+        label: "{{ item }}"
+
+    # Without this, a run where no node answered compares an empty map against
+    # the inventory, finds nothing to complain about, and reports success — a
+    # check that cannot fail looks exactly like a check that passed.
+    - name: Refuse to judge placement when no node reported
+      ansible.builtin.assert:
+        that:
+          - placement_actual | default({}) | length > 0
+        fail_msg: >-
+          No node returned a guest list, so there is nothing to compare against
+          and this check would pass regardless of the inventory. That is a
+          failure of the check, not a clean result.
+
+    # A per-entry comparison against a map keyed by the entry's own id is not
+    # expressible as a filter chain, so it is written as a loop.
+    - name: Compare each declared guest against where it actually runs
+      ansible.builtin.set_fact:
+        placement_report: >-
+          {%- set declared = (tofu_data.containers | default({}))
+                             | combine(tofu_data.vms | default({}))
+                             | combine(tofu_data.docker_vms | default({}))
+                             | combine(tofu_data.splunk_vm | default({})) -%}
+          {%- set drift = [] -%}
+          {%- set unknown = [] -%}
+          {%- set checked = [] -%}
+          {%- for name, cfg in declared.items() -%}
+          {%-   set vmid = (cfg.vmid | default('')) | string -%}
+          {%-   set want = cfg.node | default('') -%}
+          {%-   if vmid and want -%}
+          {%-     if vmid in placement_actual -%}
+          {%-       set _ = checked.append(name) -%}
+          {%-       set got = placement_actual[vmid] -%}
+          {%-       if got != want
+                       and guest_placement_exceptions.get(name, '') != got -%}
+          {%-         set _ = drift.append(name ~ ' (id ' ~ vmid ~ '): recorded '
+                                           ~ want ~ ', running on ' ~ got) -%}
+          {%-       endif -%}
+          {%-     else -%}
+          {%-       set _ = unknown.append(name ~ ' (id ' ~ vmid ~ ')') -%}
+          {%-     endif -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {{ {'drift': drift, 'not_running': unknown, 'checked': checked | length} }}
+
+    - name: Report what was compared
+      ansible.builtin.debug:
+        msg: >-
+          Compared {{ placement_report.checked }} running guests against the
+          published inventory.
+          {{ placement_report.not_running | length }} declared guests are not
+          running anywhere and were not judged.
+
+    - name: Assert every running guest is on the node the inventory records
+      ansible.builtin.assert:
+        that:
+          - placement_report.drift | length == 0
+        fail_msg: >-
+          {{ placement_report.drift | length }} guest(s) are not on the node the
+          inventory records:
+          {{ placement_report.drift | join('; ') }}.
+          The transport reaches a guest through its recorded node, so each of
+          these is reported unreachable on every run while being up and
+          healthy. Fix the record, or add a deliberate entry to
+          guest_placement_exceptions with a reason.
+        success_msg: >-
+          All {{ placement_report.checked }} running guests are on the node the
+          inventory records.
