@@ -29,6 +29,22 @@ ntp_serve: false
 # ntp_serve is true. Keep empty on pure clients.
 ntp_allow_cidrs: []
 
+# Offset in seconds above which chrony steps the clock instead of slewing it.
+# One second sits far below what the cluster layers tolerate and far above
+# normal jitter, so it never fires in steady state.
+ntp_makestep_threshold: 1.0
+
+# How many updates are allowed to step the clock. -1 means any update, always.
+# A small positive limit only permits stepping during the first few updates
+# after chrony starts, which is precisely when a host returning from an outage
+# has not yet established that its clock is wrong.
+ntp_makestep_limit: -1
+
+# Write the corrected system time back to the hardware clock, so the correction
+# survives a restart. Hosts only; a container has no RTC and this role does not
+# run chrony inside one.
+ntp_rtcsync: true
+
 # chrony service state and startup
 ntp_service_state: started
 ntp_service_enabled: true
