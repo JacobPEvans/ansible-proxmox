@@ -82,7 +82,16 @@ def render(dump_dir, map_path):
 
     # `bool` is an Ansible filter, not a core Jinja2 one, so plain Jinja2 would
     # fail on the template's own guard rather than on anything under test.
-    env = jinja2.Environment(undefined=jinja2.StrictUndefined)
+    #
+    # The loader matters: the script includes a sibling template, and Ansible's
+    # template action resolves that against the role's templates directory.
+    # Rendering from a string with no loader cannot resolve an include at all,
+    # so this environment was less faithful than production and would fail on
+    # a construct that works when deployed.
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(os.path.dirname(TEMPLATE)),
+        undefined=jinja2.StrictUndefined,
+    )
     env.filters["bool"] = lambda v: str(v).lower() in ("true", "yes", "on", "1")
     return env.from_string(body).render(**variables)
 
