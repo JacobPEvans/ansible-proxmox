@@ -11,8 +11,8 @@ that is clean in every class, because a false alarm on the healthy majority is
 what gets a hardware alert muted.
 
 The awk programs under test are copied from
-roles/pve_health_telemetry/templates/pve-health.sh.j2 and are verified against
-that file so the two cannot drift apart silently.
+roles/pve_health_telemetry/templates/pve-health-ras.sh.j2 and are verified
+against that file so the two cannot drift apart silently.
 """
 
 from __future__ import annotations
@@ -23,7 +23,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TEMPLATE = ROOT / "roles/pve_health_telemetry/templates/pve-health.sh.j2"
+# The parsers live in the RAS fragment, which pve-health.sh.j2 includes at
+# render time. Point at the fragment: asserting against the file that only
+# includes it would pass while the parsers themselves drifted.
+TEMPLATE = ROOT / "roles/pve_health_telemetry/templates/pve-health-ras.sh.j2"
+INCLUDER = ROOT / "roles/pve_health_telemetry/templates/pve-health.sh.j2"
 
 MEM = (
     '/[Ff]atal on DIMM/ {for (i = 1; i <= NF; i++) if ($i == "errors:") '
@@ -138,6 +142,16 @@ class RasTotals(unittest.TestCase):
                     squashed,
                     f"the {name} parser in the template no longer matches this test",
                 )
+
+
+    def test_the_fragment_is_still_included_by_the_health_script(self) -> None:
+        """A fragment nothing includes ships nothing, and every test above it
+        would still pass — they read the fragment directly."""
+        self.assertIn(
+            "{% include 'pve-health-ras.sh.j2' %}",
+            INCLUDER.read_text(encoding="utf-8"),
+            "the RAS fragment is no longer included, so none of it is deployed",
+        )
 
 
 if __name__ == "__main__":
