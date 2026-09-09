@@ -11,7 +11,14 @@
 #   HA state transitions                   -> pve-ha-lrm/crm, already in journal
 #   quorum loss                            -> corosync, already in journal
 #   failed units                           -> systemd, already in journal
-#   MCE / SMART / IPMI SEL                 -> rasdaemon, smartd, ipmievd
+#   MCE / SMART / IPMI SEL events          -> rasdaemon, smartd, ipmievd
+#
+# The EVENTS above are covered. Their ACCUMULATED TOTALS are not, and that is
+# the gap the three ras_* fields below close. rasdaemon reports a fault when it
+# happens; nothing reports that a node is CARRYING one. The kernel's live
+# counters reset at every boot, so a node with a known dead memory cell reads
+# zero on them and any check built on them calls it healthy. The persistent
+# database survives reboots and is the only durable record.
 #
 # Duplicating any of those here would mean two sources of truth for one fact and
 # a second thing to maintain. What remains is only what nothing else reports.
@@ -150,6 +157,36 @@ fi
 # `ipmitool sdr` prints `name | value | status`; take the first numeric token of
 # the value column. Sensors reading `disabled`/`ns` yield no number and are
 # skipped rather than counted as zero — a zero would look like a stopped fan.
+# Accumulated hardware-error totals from the persistent RAS database. These are
+# lifetime counts, not deltas: any non-zero uncorrected or fatal value means the
+# machine is carrying a fault right now, whatever the live counters say.
+# `ras-mc-ctl --summary` prints one section per class and most nodes are clean
+# in all of them, so each field is parsed from its OWN section — a grep across
+# the whole output matches a section header on a clean node and reports a fault
+# that is not there.
+ras_mem_fatal=0
+ras_mce_uncorrected=0
+ras_pcie_corrected=0
+
+if command -v ras-mc-ctl >/dev/null 2>&1; then
+  ras_summary="$(timeout 15 ras-mc-ctl --summary 2>/dev/null || true)"
+  if [ -n "$ras_summary" ]; then
+    # "Fatal on DIMM Label(s): '<label>' location: ... errors: <n>"
+    ras_mem_fatal="$(printf '%s\n' "$ras_summary" |
+      awk '/[Ff]atal on DIMM/ {for (i = 1; i <= NF; i++) if ($i == "errors:") n += $(i + 1)} END {print n + 0}')"
+    # The machine-check section lists "<n> <description> errors"; count only
+    # the uncorrected descriptions, and only inside that section.
+    ras_mce_uncorrected="$(printf '%s\n' "$ras_summary" |
+      awk '/^MCE records summary:/ {inblk = 1; next}
+           /^[A-Za-z].*summary:/ {inblk = 0}
+           inblk && tolower($0) ~ /uncorrected/ {n += $1} END {print n + 0}')"
+    ras_pcie_corrected="$(printf '%s\n' "$ras_summary" |
+      awk '/^PCIe AER events summary:/ {inblk = 1; next}
+           /^[A-Za-z].*summary:/ {inblk = 0}
+           inblk && tolower($0) ~ /corrected/ {n += $1} END {print n + 0}')"
+  fi
+fi
+
 psu_watts="$UNKNOWN"
 fan_count=0
 fan_rpm_min="$UNKNOWN"
@@ -204,6 +241,8 @@ elif { [ "$backup_identity_mismatch" != "$UNKNOWN" ] && [ "$backup_identity_mism
   { [ "$pvesr_fail" != "$UNKNOWN" ] && [ "$pvesr_fail" -gt 0 ]; } ||
   { [ "$sensor_fail" -gt 0 ]; } ||
   { [ "$fan_count" -gt 0 ] && [ "$fan_count" -lt "{{ pve_health_telemetry_fan_count_expected }}" ]; } ||
+  [ "$ras_mem_fatal" -gt 0 ] ||
+  [ "$ras_mce_uncorrected" -gt 0 ] ||
   [ "$clocksource" != "{{ pve_health_telemetry_expected_clocksource }}" ]; then
   # fan_count below the expected population catches a physically missing fan,
   # which reports no sensor row at all rather than 0 RPM.
@@ -233,4 +272,7 @@ logger -t "{{ pve_health_telemetry_tag }}" -p "$priority" \
   "fan_count=$fan_count" \
   "fan_rpm_min=$fan_rpm_min" \
   "temp_max_c=$temp_max_c" \
-  "sensor_fail=$sensor_fail"
+  "sensor_fail=$sensor_fail" \
+  "ras_mem_fatal=$ras_mem_fatal" \
+  "ras_mce_uncorrected=$ras_mce_uncorrected" \
+  "ras_pcie_corrected=$ras_pcie_corrected"
