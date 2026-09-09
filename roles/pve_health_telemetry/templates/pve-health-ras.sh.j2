@@ -1,0 +1,36 @@
+{# Persistent hardware-error totals, included into pve-health.sh.j2.
+   Split out as its own source file because it is a distinct concern from
+   the live power/fan/temperature sensors it sits next to: those read what
+   the chassis reports right now, this reads a database that survives
+   reboots. Included at RENDER time, so the deployed script is still one
+   file and no runtime dependency is added -- only the source an agent has
+   to read is smaller. #}
+# Accumulated hardware-error totals from the persistent RAS database. These are
+# lifetime counts, not deltas: any non-zero uncorrected or fatal value means the
+# machine is carrying a fault right now, whatever the live counters say.
+# `ras-mc-ctl --summary` prints one section per class and most nodes are clean
+# in all of them, so each field is parsed from its OWN section — a grep across
+# the whole output matches a section header on a clean node and reports a fault
+# that is not there.
+ras_mem_fatal=0
+ras_mce_uncorrected=0
+ras_pcie_corrected=0
+
+if command -v ras-mc-ctl >/dev/null 2>&1; then
+  ras_summary="$(timeout 15 ras-mc-ctl --summary 2>/dev/null || true)"
+  if [ -n "$ras_summary" ]; then
+    # "Fatal on DIMM Label(s): '<label>' location: ... errors: <n>"
+    ras_mem_fatal="$(printf '%s\n' "$ras_summary" |
+      awk '/[Ff]atal on DIMM/ {for (i = 1; i <= NF; i++) if ($i == "errors:") n += $(i + 1)} END {print n + 0}')"
+    # The machine-check section lists "<n> <description> errors"; count only
+    # the uncorrected descriptions, and only inside that section.
+    ras_mce_uncorrected="$(printf '%s\n' "$ras_summary" |
+      awk '/^MCE records summary:/ {inblk = 1; next}
+           /^[A-Za-z].*summary:/ {inblk = 0}
+           inblk && tolower($0) ~ /uncorrected/ {n += $1} END {print n + 0}')"
+    ras_pcie_corrected="$(printf '%s\n' "$ras_summary" |
+      awk '/^PCIe AER events summary:/ {inblk = 1; next}
+           /^[A-Za-z].*summary:/ {inblk = 0}
+           inblk && tolower($0) ~ /corrected/ {n += $1} END {print n + 0}')"
+  fi
+fi

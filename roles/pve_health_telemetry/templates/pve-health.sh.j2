@@ -11,7 +11,14 @@
 #   HA state transitions                   -> pve-ha-lrm/crm, already in journal
 #   quorum loss                            -> corosync, already in journal
 #   failed units                           -> systemd, already in journal
-#   MCE / SMART / IPMI SEL                 -> rasdaemon, smartd, ipmievd
+#   MCE / SMART / IPMI SEL events          -> rasdaemon, smartd, ipmievd
+#
+# The EVENTS above are covered. Their ACCUMULATED TOTALS are not, and that is
+# the gap the three ras_* fields below close. rasdaemon reports a fault when it
+# happens; nothing reports that a node is CARRYING one. The kernel's live
+# counters reset at every boot, so a node with a known dead memory cell reads
+# zero on them and any check built on them calls it healthy. The persistent
+# database survives reboots and is the only durable record.
 #
 # Duplicating any of those here would mean two sources of truth for one fact and
 # a second thing to maintain. What remains is only what nothing else reports.
@@ -150,6 +157,8 @@ fi
 # `ipmitool sdr` prints `name | value | status`; take the first numeric token of
 # the value column. Sensors reading `disabled`/`ns` yield no number and are
 # skipped rather than counted as zero — a zero would look like a stopped fan.
+{% include 'pve-health-ras.sh.j2' %}
+
 psu_watts="$UNKNOWN"
 fan_count=0
 fan_rpm_min="$UNKNOWN"
@@ -204,6 +213,8 @@ elif { [ "$backup_identity_mismatch" != "$UNKNOWN" ] && [ "$backup_identity_mism
   { [ "$pvesr_fail" != "$UNKNOWN" ] && [ "$pvesr_fail" -gt 0 ]; } ||
   { [ "$sensor_fail" -gt 0 ]; } ||
   { [ "$fan_count" -gt 0 ] && [ "$fan_count" -lt "{{ pve_health_telemetry_fan_count_expected }}" ]; } ||
+  [ "$ras_mem_fatal" -gt 0 ] ||
+  [ "$ras_mce_uncorrected" -gt 0 ] ||
   [ "$clocksource" != "{{ pve_health_telemetry_expected_clocksource }}" ]; then
   # fan_count below the expected population catches a physically missing fan,
   # which reports no sensor row at all rather than 0 RPM.
@@ -233,4 +244,7 @@ logger -t "{{ pve_health_telemetry_tag }}" -p "$priority" \
   "fan_count=$fan_count" \
   "fan_rpm_min=$fan_rpm_min" \
   "temp_max_c=$temp_max_c" \
-  "sensor_fail=$sensor_fail"
+  "sensor_fail=$sensor_fail" \
+  "ras_mem_fatal=$ras_mem_fatal" \
+  "ras_mce_uncorrected=$ras_mce_uncorrected" \
+  "ras_pcie_corrected=$ras_pcie_corrected"
